@@ -110,7 +110,10 @@ ServerOptions {
 	}
 
 	init {
-		defaultValues.keysValuesDo { |key, val| this.instVarPut(key, val) }
+		defaultValues.keysValuesDo { |key, val| this.instVarPut(key, val) };
+		if (Platform.hasBelaSupport, {
+			BelaServerOptions.addBelaOptions(this)
+		});
 	}
 
 	device {
@@ -229,6 +232,9 @@ ServerOptions {
 		});
 		if (thisProcess.platform.name === \osx && Server.program.asString.endsWith("supernova").not && safetyClipThreshold.notNil, {
 			o = o ++ " -s " ++ safetyClipThreshold;
+		});
+		if (Platform.hasBelaSupport, {
+			o = o ++ BelaServerOptions.asOptionsString(this)
 		});
 		^o
 	}
