@@ -29,3 +29,5 @@ cmake-build-*
 
 *~
 *.orig
+#vim swap files
+.*.sw?
