@@ -55,8 +55,24 @@ const init = () => {
         textarea.editor.on('blur', editor => {
             editor.setSelection(editor.getCursor(), null, { scroll: false })
         })
-    })
 
+        // add a copy button
+        const copyBtn = document.createElement("a")
+        copyBtn.href = "#"
+        copyBtn.title = "Copy code"
+        copyBtn.classList.add("svgIcon","copyBtn")
+        copyBtn.addEventListener('click',(ev)=>{
+          const editor = textarea.editor
+          editor.execCommand('selectAll')
+          editor.focus()
+          document.execCommand('copy')
+          editor.undoSelection();
+          copyBtn.classList.add("copied")
+          setTimeout(() => copyBtn.classList.remove("copied"),1000)
+          ev.preventDefault()
+        })
+        textarea.before(copyBtn)
+    })
 }
 
 const evalLine = () => {
