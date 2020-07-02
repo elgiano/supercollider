@@ -616,6 +616,15 @@ MIDISMPTEAssembler :  AbstractMessageMatcher {
 
 }
 
+MIDIPortDispatcher : MIDISysexDispatcher {
+
+	value {|srcID|
+		active[srcID].value(srcID);
+		active[\all].value(srcID);
+	}
+
+}
+
 
 MIDIFunc : AbstractResponderFunc {
 	classvar <>defaultDispatchers, traceFuncs, traceRunning = false, sysIndices;
@@ -677,12 +686,18 @@ MIDIFunc : AbstractResponderFunc {
 				"MIDI Message Received:\n\ttype: %\n\tsrc: %\n\tchan: %\n\tnum: %\n\n".postf(type, src, chan, num);
 			};
 		});
+		[\portStart, \portExit].do({|type|
+		 defaultDispatchers[type] = MIDIPortDispatcher(type);
+		 traceFuncs[type] = {|src|
+			 "MIDI Message Received:\n\ttype: %\n\tsrc: %\n".postf(type, src);
+		 };
+	 });
 	}
 
 	*trace {|bool = true|
 		if(bool, {
 			if(traceRunning.not, {
-				[\noteOn, \noteOff, \control, \polytouch, \touch, \program, \bend, \sysex].do({|type|
+				[\noteOn, \noteOff, \control, \polytouch, \touch, \program, \bend, \sysex, \portStart, \portExit].do({|type|
 					MIDIIn.addFuncTo(type, traceFuncs[type]);
 				});
 				[\tuneRequest, \midiClock, \tick, \start, \continue, \stop, \activeSense, \reset, \songPosition, \songSelect].do({|type|
@@ -695,7 +710,7 @@ MIDIFunc : AbstractResponderFunc {
 				traceRunning = true;
 			});
 		}, {
-			[\noteOn, \noteOff, \control, \polytouch, \touch, \program, \bend, \sysex].do({|type|
+			[\noteOn, \noteOff, \control, \polytouch, \touch, \program, \bend, \sysex, \portStart, \portExit].do({|type|
 				MIDIIn.removeFuncFrom(type, traceFuncs[type]);
 			});
 			[\tuneRequest, \midiClock, \tick, \start, \continue, \stop, \activeSense, \reset, \songPosition, \songSelect].do({|type|
@@ -807,6 +822,13 @@ MIDIFunc : AbstractResponderFunc {
 		^this.new(func, 15, nil, \reset, srcID, nil, dispatcher);
 	}
 
+	*portStart {arg func, srcID, dispatcher;
+		^this.new(func, nil, nil, \portStart, srcID, nil, dispatcher);
+	}
+
+	*portExit {arg func, srcID, dispatcher;
+		^this.new(func, nil, nil, \portExit, srcID, nil, dispatcher);
+	}
 
 	init {|argfunc, argmsgNum, argchan, argType, argsrcID, argtempl, argdisp|
 		msgNum = argmsgNum ? msgNum;
@@ -1011,6 +1033,14 @@ MIDIdef : MIDIFunc {
 
 	*reset {arg key, func, srcID, dispatcher;
 		^this.new(key, func, 15, nil, \reset, srcID, nil, dispatcher);
+	}
+
+	*portStart {arg key, func, srcID, dispatcher;
+		^this.new(key, func, nil, nil, \portStart, srcID, nil, dispatcher);
+	}
+
+	*portExit {arg key, func, srcID, dispatcher;
+		^this.new(key, func, nil, nil, \portExit, srcID, nil, dispatcher);
 	}
 
 	addToAll {|argkey| key = argkey; all.put(key, this) }

@@ -141,12 +141,14 @@ MIDIIn {
 	<> noteOn, <> noteOff, <> polytouch,
 	<> control, <> program,
 	<> touch, <> bend,
-	<> sysex, sysexPacket, <> sysrt, <> smpte, <> invalid;
+	<> sysex, sysexPacket, <> sysrt, <> smpte, <> invalid,
+	<> portStart, <> portExit;
 
 	classvar
 	<> noteOnList, <> noteOffList, <> polyList,
 	<> controlList, <> programList,
-	<> touchList, <> bendList;
+	<> touchList, <> bendList,
+	<> portStartList, <> portExitList;
 
 	classvar
 	<> noteOnZeroAsNoteOff = true;
@@ -268,6 +270,18 @@ MIDIIn {
 
 	*doSMPTEaction { arg src, frameRate, timecode;
 		smpte.value(src, frameRate, timecode);
+	}
+
+	*doPortAction { arg src, started;
+		if(started){
+			MIDIClient.list;
+			portStart.value(src);
+			this.prDispatchEvent(portStartList, \portStart, src);
+		}{
+			portExit.value(src);
+			this.prDispatchEvent(portExitList, \portExit, src);
+			MIDIClient.list;
+		}
 	}
 
 	*findPort { arg deviceName,portName;

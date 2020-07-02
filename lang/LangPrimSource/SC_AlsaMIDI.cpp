@@ -54,6 +54,7 @@ PyrSymbol* s_midiBendAction;
 PyrSymbol* s_midiSysexAction;
 PyrSymbol* s_midiSysrtAction;
 PyrSymbol* s_midiSMPTEAction;
+PyrSymbol* s_midiPortAction;
 
 const int kMaxMidiPorts = 128;
 bool gMIDIInitialized = false;
@@ -356,6 +357,46 @@ void SC_AlsaMidiClient::processEvent(snd_seq_event_t* evt) {
             SetObject(g->sp, (PyrObject*)sysexArray);
             runInterpreter(g, s_midiSysexAction, 3);
             break;
+        case SND_SEQ_EVENT_PORT_START:
+        case SND_SEQ_EVENT_PORT_EXIT:
+            SetInt(g->sp, SC_AlsaMakeUID(evt->data.addr.client, evt->data.addr.port));
+            ++g->sp;
+            SetBool(g->sp, evt->type == SND_SEQ_EVENT_PORT_START);
+            runInterpreter(g, s_midiPortAction, 3);
+            break;
+        /*{
+            snd_seq_t* seq;
+            snd_seq_client_info_t* cinfo;
+            snd_seq_port_info_t* pinfo;
+            snd_seq_client_info_alloca(&cinfo);
+            snd_seq_port_info_alloca(&pinfo);
+            snd_seq_client_info_set_client(cinfo, evt->data.addr.client);
+            snd_seq_get_client_info(seq,cinfo);
+            snd_seq_port_info_set_client(pinfo, evt->data.addr.client);
+            snd_seq_port_info_set_port(pinfo, evt->data.addr.port);
+
+            if ((evt->data.addr.port < 0) || (evt->data.addr.port > 0xffff)) {
+                post("MIDI (ALSA): port ID out of range.\n");
+                g->sp -= 2;
+                break;
+            }
+
+            SC_AlsaMidiPort port;
+            snprintf(port.name, kAlsaMaxPortNameLen, "%s", snd_seq_port_info_get_name(pinfo));
+            snprintf(port.device, kAlsaMaxPortNameLen, "%s", snd_seq_client_info_get_name(cinfo));
+            port.uid = SC_AlsaMakeUID(evt->data.addr.client, evt->data.addr.port);
+            post("MIDI (ALSA): endpoint uid %u %u\n", );
+
+            if (SC_AlsaCheckPerm(pinfo, SND_SEQ_PORT_CAP_READ | SND_SEQ_PORT_CAP_SUBS_READ)) {
+                post("MIDI (ALSA): src %s-%s %d:%d %u\n", cname, pname, port.uid);
+            }
+
+            if (SC_AlsaCheckPerm(pinfo, SND_SEQ_PORT_CAP_WRITE | SND_SEQ_PORT_CAP_SUBS_WRITE)) {
+                post("MIDI (ALSA): dst %s-%s %d:%d %u\n", cname, pname, port.uid);
+            }
+            g->sp -= 2;
+            break;
+            }*/
         default:
             // unknown: convert to midi packet
             snd_midi_event_reset_decode(mEventToMidi);
@@ -1089,6 +1130,7 @@ void initMIDIPrimitives() {
     s_midiSysexAction = getsym("doSysexAction");
     s_midiSysrtAction = getsym("doSysrtAction");
     s_midiSMPTEAction = getsym("doSMPTEaction");
+    s_midiPortAction = getsym("doPortAction");
 
     definePrimitive(base, index++, "_InitMIDI", prInitMIDI, 3, 0);
     definePrimitive(base, index++, "_InitMIDIClient", prInitMIDIClient, 1, 0);
