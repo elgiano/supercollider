@@ -150,6 +150,7 @@ protected:
     struct World* mWorld;
     double mOSCtoSamples;
     int mSampleTime;
+    float mSafetyClipThreshold;
 
     // Common members
     uint32 mHardwareBufferSize; // bufferSize returned by kAudioDevicePropertyBufferSize
@@ -215,6 +216,7 @@ public:
     int NumSamplesPerCallback() const { return mNumSamplesPerCallback; }
     void SetPreferredHardwareBufferFrameSize(int inSize) { mPreferredHardwareBufferFrameSize = inSize; }
     void SetPreferredSampleRate(int inRate) { mPreferredSampleRate = inRate; }
+    void SetSafetyClipThreshold(float thr) { mSafetyClipThreshold = thr; }
 
     bool SendMsgToEngine(FifoMsg& inMsg); // called by NRT thread
     bool SendMsgFromEngine(FifoMsg& inMsg);

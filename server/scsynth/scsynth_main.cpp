@@ -80,6 +80,7 @@ void Usage() {
              "          UDP ports never require passwords, so for security use TCP.\n"
              "   -N <cmd-filename> <input-filename> <output-filename> <sample-rate> <header-format> <sample-format>\n"
 #ifdef __APPLE__
+             "   -s <safety-clip-threshold>          (default %d)\n"
              "   -I <input-streams-enabled>\n"
              "   -O <output-streams-enabled>\n"
 #endif
@@ -110,7 +111,12 @@ void Usage() {
              defaultOptions.mPreferredHardwareBufferFrameSize, defaultOptions.mPreferredSampleRate,
              defaultOptions.mNumBuffers, defaultOptions.mMaxNodes, defaultOptions.mMaxGraphDefs,
              defaultOptions.mRealTimeMemorySize, defaultOptions.mMaxWireBufs, defaultOptions.mNumRGens,
-             defaultOptions.mRendezvous, defaultOptions.mLoadGraphDefs, defaultOptions.mMaxLogins);
+             defaultOptions.mRendezvous, defaultOptions.mLoadGraphDefs, defaultOptions.mMaxLogins
+#ifdef __APPLE__
+             ,
+             defaultOptions.mSafetyClipThreshold
+#endif
+    );
     exit(1);
 }
 
@@ -139,7 +145,8 @@ int scsynth_main(int argc, char** argv) {
     WorldOptions options;
 
     for (int i = 1; i < argc;) {
-        if (argv[i][0] != '-' || argv[i][1] == 0 || strchr("utBaioczblndpmwZrCNSDIOMHvVRUhPL", argv[i][1]) == nullptr) {
+        if (argv[i][0] != '-' || argv[i][1] == 0
+            || strchr("utBaioczblndpmwZrCNSDIOsMHvVRUhPL", argv[i][1]) == nullptr) {
             scprintf("ERROR: Invalid option %s\n", argv[i]);
             Usage();
         }
@@ -247,6 +254,10 @@ int scsynth_main(int argc, char** argv) {
             break;
         case 'M':
 #endif
+        case 's':
+            checkNumArgs(2);
+            options.mSafetyClipThreshold = atof(argv[j + 1]);
+            break;
         case 'H':
             checkNumArgs(2);
             options.mInDeviceName = argv[j + 1];
