@@ -150,7 +150,6 @@ protected:
     struct World* mWorld;
     double mOSCtoSamples;
     int mSampleTime;
-    float mSafetyClipThreshold;
 
     // Common members
     uint32 mHardwareBufferSize; // bufferSize returned by kAudioDevicePropertyBufferSize
@@ -216,7 +215,6 @@ public:
     int NumSamplesPerCallback() const { return mNumSamplesPerCallback; }
     void SetPreferredHardwareBufferFrameSize(int inSize) { mPreferredHardwareBufferFrameSize = inSize; }
     void SetPreferredSampleRate(int inRate) { mPreferredSampleRate = inRate; }
-    void SetSafetyClipThreshold(float thr) { mSafetyClipThreshold = thr; }
 
     bool SendMsgToEngine(FifoMsg& inMsg); // called by NRT thread
     bool SendMsgFromEngine(FifoMsg& inMsg);
@@ -270,7 +268,7 @@ public:
 
     bool StopStart();
 
-    void Run(const AudioBufferList* inInputData, AudioBufferList* outOutputData, int64 oscTime);
+    virtual void Run(const AudioBufferList* inInputData, AudioBufferList* outOutputData, int64 oscTime);
 
     bool UseInput() { return mInputDevice != kAudioDeviceUnknown; }
     bool UseSeparateIO() { return UseInput() && mInputDevice != mOutputDevice; }
@@ -281,6 +279,14 @@ public:
     AudioBufferList* GetInputBufferList() const { return mInputBufList; }
 };
 
+class SC_CoreAudioClippingDriver : SC_CoreAudioDriver {
+    float mSafetyClipThreshold;
+
+public:
+    SC_CoreAudioClippingDriver(struct World* inWorld);
+    void Run(const AudioBufferList* inInputData, AudioBufferList* outOutputData, int64 oscTime) override;
+    void SetSafetyClipThreshold(float thr) { mSafetyClipThreshold = thr; }
+};
 #endif
 
 #if SC_AUDIO_API == SC_AUDIO_API_COREAUDIOIPHONE

@@ -129,6 +129,7 @@ struct HiddenWorld {
 #ifdef __APPLE__
     const char* mInputStreamsEnabled;
     const char* mOutputStreamsEnabled;
+    float mSafetyClipThreshold;
 #endif
     const char* mInDeviceName;
     const char* mOutDeviceName;

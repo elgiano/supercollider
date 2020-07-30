@@ -330,11 +330,7 @@ void Free_FromEngine_Msg(FifoMsg* inMsg) { World_Free(inMsg->mWorld, inMsg->mDat
 // =====================================================================
 // Audio driver (Common)
 
-SC_AudioDriver::SC_AudioDriver(struct World* inWorld):
-    mWorld(inWorld),
-    mSampleTime(0),
-    mNumSamplesPerCallback(0),
-    mSafetyClipThreshold(2.f) {}
+SC_AudioDriver::SC_AudioDriver(struct World* inWorld): mWorld(inWorld), mSampleTime(0), mNumSamplesPerCallback(0) {}
 
 SC_AudioDriver::~SC_AudioDriver() {
     mRunThreadFlag = false;
@@ -470,7 +466,15 @@ bool SC_AudioDriver::Stop() {
 // Audio driver (CoreAudio)
 #if SC_AUDIO_API == SC_AUDIO_API_COREAUDIO
 
-SC_AudioDriver* SC_NewAudioDriver(struct World* inWorld) { return new SC_CoreAudioDriver(inWorld); }
+SC_AudioDriver* SC_NewAudioDriver(struct World* inWorld) {
+    if (inWorld->hw->mSafetyClipThreshold != INFINITY) {
+        auto driver = new SC_CoreAudioClippingDriver(inWorld);
+        driver->SetSafetyClipThreshold(inWorld->hw->mSafetyClipThreshold);
+        return reinterpret_cast<SC_AudioDriver*>(driver);
+    } else {
+        return new SC_CoreAudioDriver(inWorld);
+    }
+}
 
 #endif
 
@@ -1265,6 +1269,159 @@ OSStatus appIOProc(AudioDeviceID device, const AudioTimeStamp* inNow, const Audi
 }
 
 void SC_CoreAudioDriver::Run(const AudioBufferList* inInputData, AudioBufferList* outOutputData, int64 oscTime) {
+    int64 systemTimeBefore = AudioGetCurrentHostTime();
+    World* world = mWorld;
+
+    try {
+        int numSamplesPerCallback = NumSamplesPerCallback();
+        mOSCbuftime = oscTime;
+
+#    ifdef __APPLE__
+        // FIXME: aren't denormal flags set per-process?
+        sc_SetDenormalFlags();
+#    endif
+
+        mFromEngine.Free();
+        /*if (mToEngine.HasData()) {
+            scprintf("oscTime %.9f %.9f\n", oscTime*kOSCtoSecs,
+        CoreAudioHostTimeToOSC(AudioGetCurrentHostTime())*kOSCtoSecs);
+        }*/
+        mToEngine.Perform();
+        mOscPacketsToEngine.Perform();
+
+        int bufFrames = world->mBufLength;
+        int numBufs = numSamplesPerCallback / bufFrames;
+
+        int numInputBuses = world->mNumInputs;
+        int numOutputBuses = world->mNumOutputs;
+        float* inputBuses = world->mAudioBus + world->mNumOutputs * bufFrames;
+        float* outputBuses = world->mAudioBus;
+        int32* inputTouched = world->mAudioBusTouched + world->mNumOutputs;
+        int32* outputTouched = world->mAudioBusTouched;
+        int numInputStreams = inInputData ? inInputData->mNumberBuffers : 0;
+        int numOutputStreams = outOutputData ? outOutputData->mNumberBuffers : 0;
+
+        // static int go = 0;
+
+        int64 oscInc = mOSCincrement;
+        double oscToSamples = mOSCtoSamples;
+
+        int bufFramePos = 0;
+
+        for (int i = 0; i < numBufs; ++i, world->mBufCounter++, bufFramePos += bufFrames) {
+            int32 bufCounter = world->mBufCounter;
+
+            // de-interleave input
+            if (inInputData) {
+                const AudioBuffer* inInputDataBuffers = inInputData->mBuffers;
+                for (int s = 0, b = 0; b < numInputBuses && s < numInputStreams; s++) {
+                    const AudioBuffer* buf = inInputDataBuffers + s;
+                    int nchan = buf->mNumberChannels;
+                    if (buf->mData) {
+                        float* busdata = inputBuses + b * bufFrames;
+                        float* bufdata = (float*)buf->mData + bufFramePos * nchan;
+                        if (nchan == 1) {
+                            for (int k = 0; k < bufFrames; ++k) {
+                                busdata[k] = bufdata[k];
+                            }
+                            inputTouched[b] = bufCounter;
+                        } else {
+                            int minchan = sc_min(nchan, numInputBuses - b);
+                            for (int j = 0; j < minchan; ++j, busdata += bufFrames) {
+                                for (int k = 0, m = j; k < bufFrames; ++k, m += nchan) {
+                                    busdata[k] = bufdata[m];
+                                }
+                                inputTouched[b + j] = bufCounter;
+                            }
+                        }
+                        b += nchan;
+                    }
+                }
+            }
+            // count++;
+
+            int64 schedTime;
+            int64 nextTime = oscTime + oscInc;
+
+            /*if (mScheduler.Ready(nextTime)) {
+                double diff = (mScheduler.NextTime() - mOSCbuftime)*kOSCtoSecs;
+                scprintf("rdy %.9f %.9f %.9f\n", (mScheduler.NextTime()-gStartupOSCTime) * kOSCtoSecs,
+            (mOSCbuftime-gStartupOSCTime)*kOSCtoSecs, diff);
+            }*/
+
+            while ((schedTime = mScheduler.NextTime()) <= nextTime) {
+                float diffTime = (float)(schedTime - oscTime) * oscToSamples + 0.5;
+                float diffTimeFloor = floor(diffTime);
+                world->mSampleOffset = (int)diffTimeFloor;
+                world->mSubsampleOffset = diffTime - diffTimeFloor;
+
+                if (world->mSampleOffset < 0)
+                    world->mSampleOffset = 0;
+                else if (world->mSampleOffset >= world->mBufLength)
+                    world->mSampleOffset = world->mBufLength - 1;
+
+                SC_ScheduledEvent event = mScheduler.Remove();
+                event.Perform();
+            }
+            world->mSampleOffset = 0;
+            world->mSubsampleOffset = 0.f;
+
+            World_Run(world);
+
+            // interleave output
+            AudioBuffer* outOutputDataBuffers = outOutputData->mBuffers;
+            for (int s = 0, b = 0; b < numOutputBuses && s < numOutputStreams; s++) {
+                AudioBuffer* buf = outOutputDataBuffers + s;
+                int nchan = buf->mNumberChannels;
+                if (buf->mData) {
+                    float* busdata = outputBuses + b * bufFrames;
+                    float* bufdata = (float*)buf->mData + bufFramePos * nchan;
+                    if (nchan == 1) {
+                        if (outputTouched[b] == bufCounter) {
+                            for (int k = 0; k < bufFrames; ++k) {
+                                bufdata[k] = busdata[k];
+                            }
+                        }
+                    } else {
+                        int minchan = sc_min(nchan, numOutputBuses - b);
+                        for (int j = 0; j < minchan; ++j, busdata += bufFrames) {
+                            if (outputTouched[b + j] == bufCounter) {
+                                for (int k = 0, m = j; k < bufFrames; ++k, m += nchan) {
+                                    bufdata[m] = busdata[k];
+                                }
+                            }
+                        }
+                    }
+                    b += nchan;
+                }
+            }
+            oscTime = mOSCbuftime = nextTime;
+        }
+    } catch (std::exception& exc) {
+        scprintf("exception in real time: %s\n", exc.what());
+    } catch (...) {
+        scprintf("unknown exception in real time\n");
+    }
+    int64 systemTimeAfter = AudioGetCurrentHostTime();
+    double calcTime = (double)AudioConvertHostTimeToNanos(systemTimeAfter - systemTimeBefore) * 1e-9;
+    double cpuUsage = calcTime * mBuffersPerSecond * 100.;
+    mAvgCPU = mAvgCPU + 0.1 * (cpuUsage - mAvgCPU);
+    if (cpuUsage > mPeakCPU || --mPeakCounter <= 0) {
+        mPeakCPU = cpuUsage;
+        mPeakCounter = mMaxPeakCounter;
+    }
+
+    mAudioSync.Signal();
+}
+
+// clipping driver: overrides only ::Run
+SC_CoreAudioClippingDriver::SC_CoreAudioClippingDriver(struct World* inWorld):
+    SC_CoreAudioDriver(inWorld),
+    mSafetyClipThreshold(2.f) {}
+
+// copy of previous method, with added clipping
+void SC_CoreAudioClippingDriver::Run(const AudioBufferList* inInputData, AudioBufferList* outOutputData,
+                                     int64 oscTime) {
     int64 systemTimeBefore = AudioGetCurrentHostTime();
     World* world = mWorld;
 

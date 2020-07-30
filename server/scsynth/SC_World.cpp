@@ -393,6 +393,7 @@ World* World_New(WorldOptions* inOptions) {
 #ifdef __APPLE__
         world->hw->mInputStreamsEnabled = inOptions->mInputStreamsEnabled;
         world->hw->mOutputStreamsEnabled = inOptions->mOutputStreamsEnabled;
+        world->hw->mSafetyClipThreshold = inOptions->mSafetyClipThreshold;
 #endif
         world->hw->mInDeviceName = inOptions->mInDeviceName;
         world->hw->mOutDeviceName = inOptions->mOutDeviceName;
@@ -409,9 +410,6 @@ World* World_New(WorldOptions* inOptions) {
             hw->mAudioDriver = SC_NewAudioDriver(world);
             hw->mAudioDriver->SetPreferredHardwareBufferFrameSize(inOptions->mPreferredHardwareBufferFrameSize);
             hw->mAudioDriver->SetPreferredSampleRate(inOptions->mPreferredSampleRate);
-#ifdef __APPLE__
-            hw->mAudioDriver->SetSafetyClipThreshold(inOptions->mSafetyClipThreshold);
-#endif
 
             if (inOptions->mLoadGraphDefs) {
                 World_LoadGraphDefs(world);
