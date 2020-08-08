@@ -268,7 +268,7 @@ public:
 
     bool StopStart();
 
-    virtual void Run(const AudioBufferList* inInputData, AudioBufferList* outOutputData, int64 oscTime);
+    void Run(const AudioBufferList* inInputData, AudioBufferList* outOutputData, int64 oscTime);
 
     bool UseInput() { return mInputDevice != kAudioDeviceUnknown; }
     bool UseSeparateIO() { return UseInput() && mInputDevice != mOutputDevice; }

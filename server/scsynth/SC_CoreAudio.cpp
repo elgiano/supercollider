@@ -1211,12 +1211,10 @@ OSStatus appIOProc2 (AudioDeviceID inDevice, const AudioTimeStamp* inNow,
 }
 */
 
-
+template<class T>
 OSStatus appIOProcSeparateIn(AudioDeviceID device, const AudioTimeStamp* inNow, const AudioBufferList* inInputData,
                              const AudioTimeStamp* inInputTime, AudioBufferList* outOutputData,
-                             const AudioTimeStamp* inOutputTime, void* defptr) {
-    SC_CoreAudioDriver* def = (SC_CoreAudioDriver*)defptr;
-
+                             const AudioTimeStamp* inOutputTime, T* def) {
     // copy input data to driver's private buffer list
     int i;
     for (i = 0; i < inInputData->mNumberBuffers; i++) {
@@ -1227,10 +1225,10 @@ OSStatus appIOProcSeparateIn(AudioDeviceID device, const AudioTimeStamp* inNow, 
     return kAudioHardwareNoError;
 }
 
+template<class T>
 OSStatus appIOProc(AudioDeviceID device, const AudioTimeStamp* inNow, const AudioBufferList* inInputData,
                    const AudioTimeStamp* inInputTime, AudioBufferList* outOutputData,
-                   const AudioTimeStamp* inOutputTime, void* defptr) {
-    SC_CoreAudioDriver* def = (SC_CoreAudioDriver*)defptr;
+                   const AudioTimeStamp* inOutputTime, T* def) {
     int64 oscTime = CoreAudioHostTimeToOSC(inOutputTime->mHostTime);
 
     double hostSecs = (double)AudioConvertHostTimeToNanos(inOutputTime->mHostTime) * 1e-9;
@@ -1774,14 +1772,14 @@ bool SC_CoreAudioDriver::DriverStart() {
             //		err = AudioDeviceAddIOProc(mOutputDevice, appIOProc, (void *) this);	// setup Out device with an
             // IO proc
 
-            err = AudioDeviceCreateIOProcID(mOutputDevice, appIOProc, (void*)this, &mOutputID);
+            err = AudioDeviceCreateIOProcID(mOutputDevice, appIOProc, &this, &mOutputID);
             if (err != kAudioHardwareNoError) {
                 scprintf("AudioDeviceAddIOProc failed %s %d\n", &err, (int)err);
                 return false;
             }
             //		err = AudioDeviceAddIOProc(mInputDevice, appIOProcSeparateIn, (void *) this);		// setup In
             // device with an IO proc
-            err = AudioDeviceCreateIOProcID(mInputDevice, appIOProcSeparateIn, (void*)this, &mInputID);
+            err = AudioDeviceCreateIOProcID(mInputDevice, appIOProcSeparateIn, &this, &mInputID);
 
             if (err != kAudioHardwareNoError) {
                 scprintf("AudioDeviceAddIOProc failed %s %d\n", &err, (int)err);
@@ -1847,7 +1845,7 @@ bool SC_CoreAudioDriver::DriverStart() {
             }
         } else {
             // err = AudioDeviceAddIOProc(mOutputDevice, appIOProc, (void *) this);	// setup our device with an IO proc
-            err = AudioDeviceCreateIOProcID(mOutputDevice, appIOProc, (void*)this, &mOutputID);
+            err = AudioDeviceCreateIOProcID(mOutputDevice, appIOProc, &this, &mOutputID);
 
             if (err != kAudioHardwareNoError) {
                 scprintf("AudioDeviceAddIOProc failed %d\n", (int)err);
