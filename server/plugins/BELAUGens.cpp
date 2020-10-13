@@ -28,6 +28,7 @@
 #include <atomic>
 
 #include "Bela.h"
+#include "libraries/Scope/Scope.h"
 // These functions are provided by xenomai
 int rt_printf(const char *format, ...);
 int rt_fprintf(FILE *stream, const char *format, ...);
@@ -1342,6 +1343,49 @@ void BelaScope_Dtor(BelaScope *unit)
 }
 */
 
+struct BelaScopeUGen : public Unit
+{
+    Scope* belaScope;
+    float* frameData;
+    unsigned int noScopeChannels = 0;
+};
+
+void BelaScopeUGen_next(BelaScopeUGen *unit, unsigned int numSamples)
+{
+    unsigned int numChannels = unit->noScopeChannels;
+    float *frameData = unit->frameData;
+    float *inputPointers[numChannels];
+    for(unsigned int ch = 0; ch < numChannels; ++ch)
+    inputPointers[ch] = ZIN(ch+1);
+
+    LOOP1(numSamples,
+        for(unsigned int ch = 0; ch < numChannels; ++ch)
+            frameData[ch] = ZXP(inputPointers[ch]);//*(IN(1+ch)+n);
+        unit->belaScope->log(frameData);
+    )
+}
+
+void BelaScopeUGen_Ctor(BelaScopeUGen *unit)
+{
+    BelaContext *context = unit->mWorld->mBelaContext;
+    unsigned int numChannels = static_cast<unsigned int>(IN0(0));
+    unit->frameData = (float*) RTAlloc(unit->mWorld, sizeof(float)*numChannels);
+    unit->belaScope = new Scope();
+    unit->belaScope->setup(numChannels, context->audioSampleRate);
+    unit->noScopeChannels = numChannels;
+    // initiate first sample
+    BelaScopeUGen_next( unit, 1);
+    // set calculation method
+    SETCALC(BelaScopeUGen_next);
+}
+
+void BelaScopeUGen_Dtor(BelaScopeUGen *unit)
+{
+    unit->belaScope->cleanup();
+    delete unit->belaScope;
+    RTFree(unit->mWorld, unit->frameData);
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 // extern "C"
@@ -1392,6 +1436,7 @@ PluginLoad(BELA)
 	DefineSimpleUnit(DigitalIn);
 	DefineSimpleUnit(DigitalOut);
 	DefineSimpleUnit(DigitalIO);
+    DefineDtorUnit(BelaScopeUGen);
 }
 
 

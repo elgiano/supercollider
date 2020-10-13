@@ -92,3 +92,14 @@ DigitalIO : UGen {
         ^this.multiNew('control', digitalPin, output, pinMode ).madd(mul,add)
     }
 }
+
+/* input 1: max number of scope channels
+ * input 2: bus number
+ */
+BelaScopeUGen : UGen {
+	*ar { arg maxChannels, busnum;
+		^super.performList('new1', 'audio', maxChannels, In.ar(busnum, maxChannels));
+	}
+	numOutputs { ^0 }
+	writeOutputSpecs {}
+}
