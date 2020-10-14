@@ -94,6 +94,8 @@ public:
 	static AuxiliaryTask mAudioSyncSignalTask;
 	static int countInstances;
 	static SC_SyncCondition* staticMAudioSync;
+
+	Scope* mBelaScope;
 private:
 	uint32 mSCBufLength;
 };
@@ -125,6 +127,7 @@ SC_BelaDriver::SC_BelaDriver(struct World *inWorld)
 		fprintf(stderr, "Error: there are %d instances of SC_BelaDriver running at the same time. Exiting\n", countInstances);
 		exit(1);
 	}
+	mBelaScope = inWorld->mBelaScope;
 }
 
 SC_BelaDriver::~SC_BelaDriver()
@@ -141,8 +144,9 @@ static float gBelaSampleRate;
 bool sc_belaSetup(BelaContext* belaContext, void* userData)
 {
     // cast void pointer
-    //SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
+	SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
 	gBelaSampleRate = belaContext->audioSampleRate;
+	belaDriver->mBelaScope->setup(8, gBelaSampleRate);
 	return true;
 }
 

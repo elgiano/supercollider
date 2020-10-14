@@ -465,6 +465,7 @@ World* World_New(WorldOptions *inOptions)
 		world->mBelaADCLevel = inOptions->mBelaADCLevel;
 		world->mBelaNumMuxChannels = inOptions->mBelaNumMuxChannels;
 		world->mBelaPRU = inOptions->mBelaPRU;
+		world->mBelaScope = new Scope();
 #endif
 
 #ifdef __APPLE__
@@ -1099,6 +1100,9 @@ void World_Cleanup(World *world, bool unload_plugins)
 		free_alig(world->mControlBus);
 	free_alig(world->mAudioBus);
 	delete [] world->mRGen;
+#ifdef BELA
+	delete world->mBelaScope;
+#endif
 	if (hw) {
 
 #ifndef NO_LIBSNDFILE
