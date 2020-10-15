@@ -13,11 +13,21 @@ BelaScope {
 		
 		var ugens = this.class.prInputAsAudioRateUGens(signals);
 
-		if(ugens.notNil and: this.prIsValidScopeChannel(channelOffset, signals)){
+		if(ugens.notNil and: this.prIsValidScopeChannel(channelOffset, signals)) {
 			Out.ar(this.bus.index + channelOffset, ugens);
 		};
 
 		^signals;
+	}
+
+	*monitorBus { |channelOffset, busindex, numChannels, target|
+		var server, belaScope;
+		target = target.asTarget;
+		server = target.server;
+		belaScope = this.getInstance(server);
+		if(belaScope.prIsValidScopeChannel(channelOffset, busindex+(0..numChannels))) {
+			^Monitor().play(busindex, numChannels, belaScope.bus.index + channelOffset, numChannels, target, addAction:\addAfter);
+		}
 	}
 
 	maxChannels { ^this.server.options.belaMaxScopeChannels }
@@ -140,5 +150,27 @@ BelaScope {
 + Array {
 	belaScope { |scopeChannel, server|
 		^BelaScope.scope(scopeChannel, this, server)
+	}
+}
+
++ Bus {
+	belaScope { |scopeChannel|
+		^BelaScope.monitorBus(scopeChannel, index, numChannels);
+	}
+}
+
++ Function {
+	belaScope { |scopeChannel, numChannels = 1, target, outbus = 0, fadeTime = 0.02, addAction = \addToHead, args|
+		var synth  = this.play(target, outbus, fadeTime, addAction, args);
+		var monitor = BelaScope.monitorBus(scopeChannel, outbus, numChannels, target);
+		
+		^synth.onFree { if(monitor.notNil) { monitor.free } };
+	}
+}
+
++ Server {
+	belaScope { |scopeChannel, numChannels, index = 0|
+		numChannels = numChannels ?? { if (index == 0) { options.numOutputBusChannels } { 2 } };
+		^Bus(\audio, index, numChannels, this).belaScope(scopeChannel);
 	}
 }
