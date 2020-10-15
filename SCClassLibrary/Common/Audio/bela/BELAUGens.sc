@@ -96,10 +96,11 @@ DigitalIO : UGen {
 /* input 1: bus
  * input 2: number of channels to scope
  */
-BelaScopeUGen : UGen {
+BelaScopeUGen : AbstractOut {
     *ar { arg busnum, numChannels;
-       ^super.performList('new1', 'audio', In.ar(busnum, numChannels));
+       super.performList('new1', 'audio', In.ar(busnum, numChannels));
+       ^0.0;    // BelaScopeUGen has no outputs
     }
-    numOutputs { ^0 }
-    writeOutputSpecs {}
+    *numFixedArgs { ^0 }
+    writesToBus { ^false }
 }
