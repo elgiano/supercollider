@@ -1344,11 +1344,15 @@ void BelaScope_Dtor(BelaScope *unit)
 
 struct BelaScopeUGen : public Unit
 {
+    static unsigned int instanceCount;
+
     Scope* belaScope;
     float* frameData;
     unsigned int noScopeChannels;
     unsigned int maxScopeChannels;
 };
+
+unsigned int BelaScopeUGen::instanceCount = 0;
 
 void BelaScopeUGen_next(BelaScopeUGen *unit, unsigned int numSamples)
 {
@@ -1368,6 +1372,8 @@ void BelaScopeUGen_next(BelaScopeUGen *unit, unsigned int numSamples)
     )
 }
 
+void BelaScopeUGen_noop(unsigned int numFrames) { /* no-op */ }
+
 void BelaScopeUGen_Ctor(BelaScopeUGen *unit)
 {
     uint32 numInputs = unit->mNumInputs;
@@ -1375,6 +1381,12 @@ void BelaScopeUGen_Ctor(BelaScopeUGen *unit)
     if(numInputs > maxScopeChannels) {
        rt_printf("BelaScopeUGen warning: can't scope %i channels, maxBelaScopeChannels is set to %i\n", numInputs, maxScopeChannels);
     }
+    BelaScopeUGen::instanceCount++;
+    if(BelaScopeUGen::instanceCount > 1) {
+        rt_printf("BelaScopeUGen warning: creating a new instance when one is already active. This one will do nothing.\n"); 
+        SETCALC(BelaScopeUGen_noop);
+        return;
+    };
     unit->noScopeChannels = sc_min(numInputs, maxScopeChannels);
     unit->maxScopeChannels = maxScopeChannels;
     unit->frameData = (float*) RTAlloc(unit->mWorld, sizeof(float)*unit->noScopeChannels);
@@ -1387,7 +1399,8 @@ void BelaScopeUGen_Ctor(BelaScopeUGen *unit)
 
 void BelaScopeUGen_Dtor(BelaScopeUGen *unit)
 {
-    RTFree(unit->mWorld, unit->frameData);
+    if(unit->frameData) RTFree(unit->mWorld, unit->frameData);
+    BelaScopeUGen::instanceCount--;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
