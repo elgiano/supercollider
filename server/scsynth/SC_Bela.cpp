@@ -96,6 +96,7 @@ public:
 	static SC_SyncCondition* staticMAudioSync;
 
 	Scope* mBelaScope;
+	uint32 mBelaMaxScopeChannels;
 private:
 	uint32 mSCBufLength;
 };
@@ -128,6 +129,7 @@ SC_BelaDriver::SC_BelaDriver(struct World *inWorld)
 		exit(1);
 	}
 	mBelaScope = inWorld->mBelaScope;
+	mBelaMaxScopeChannels = inWorld->mBelaMaxScopeChannels;
 }
 
 SC_BelaDriver::~SC_BelaDriver()
@@ -490,7 +492,7 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
             settings->pruNumber = mWorld->mBelaPRU;
         }
 
-	scprintf("SC_BelaDriver: >>DriverSetup - Running on PRU (%i)\nConfigured with \n (%i) analog input and (%i) analog output channels, (%i) digital channels, and (%i) multiplexer channels.\n HeadphoneLevel (%f dB), pga_gain_left (%f dB) and pga_gain_right (%f dB)\n DAC Level (%f dB), ADC Level (%f dB)\n", settings->pruNumber, settings->numAnalogInChannels, settings->numAnalogOutChannels, settings->numDigitalChannels, settings->numMuxChannels, settings->headphoneLevel, settings->pgaGain[0],settings->pgaGain[1], settings->dacLevel, settings->adcLevel );
+	scprintf("SC_BelaDriver: >>DriverSetup - Running on PRU (%i)\nConfigured with \n (%i) analog input and (%i) analog output channels, (%i) digital channels, and (%i) multiplexer channels.\n HeadphoneLevel (%f dB), pga_gain_left (%f dB) and pga_gain_right (%f dB)\n DAC Level (%f dB), ADC Level (%f dB)\n Osciloscope Channels (%i)\n", settings->pruNumber, settings->numAnalogInChannels, settings->numAnalogOutChannels, settings->numDigitalChannels, settings->numMuxChannels, settings->headphoneLevel, settings->pgaGain[0],settings->pgaGain[1], settings->dacLevel, settings->adcLevel, mWorld->mBelaMaxScopeChannels );
         if ( settings->beginMuted == 1 ){
             scprintf( "Speakers are muted.\n" );
         } else {

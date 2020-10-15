@@ -60,6 +60,7 @@ ServerOptions {
 	var <>adcLevel;
 	var <>numMultiplexChannels;
 	var <>belaPRU;
+	var <>belaMaxScopeChannels = 2;
 
 	var <>recHeaderFormat="aiff";
 	var <>recSampleFormat="float";
@@ -206,6 +207,9 @@ ServerOptions {
 		});
 		if (belaPRU.notNil, {
 			o = o ++ " -T " ++ belaPRU;
+		});
+		if (belaMaxScopeChannels.notNil, {
+			o = o ++ " -O " ++ belaMaxScopeChannels;
 		});
 		^o
 	}

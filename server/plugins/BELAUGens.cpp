@@ -1346,33 +1346,41 @@ struct BelaScopeUGen : public Unit
 {
     Scope* belaScope;
     float* frameData;
-    unsigned int noScopeChannels = 0;
+    unsigned int noScopeChannels;
+    unsigned int maxScopeChannels;
 };
 
 void BelaScopeUGen_next(BelaScopeUGen *unit, unsigned int numSamples)
 {
     unsigned int numChannels = unit->noScopeChannels;
+    unsigned int maxChannels = unit->maxScopeChannels;
     float *frameData = unit->frameData;
-    float *inputPointers[numChannels];
+    float *inputPointers[maxChannels];
     for(unsigned int ch = 0; ch < numChannels; ++ch)
-    inputPointers[ch] = ZIN(ch+1);
+        inputPointers[ch] = ZIN(ch);
 
     LOOP1(numSamples,
         for(unsigned int ch = 0; ch < numChannels; ++ch)
             frameData[ch] = ZXP(inputPointers[ch]);
+        for(unsigned int ch = numChannels; ch < maxChannels; ++ch)
+            frameData[ch] = 0.0;
         unit->belaScope->log(frameData);
     )
 }
 
 void BelaScopeUGen_Ctor(BelaScopeUGen *unit)
 {
-    BelaContext *context = unit->mWorld->mBelaContext;
-    unsigned int numChannels = static_cast<unsigned int>(IN0(0));
-    unit->frameData = (float*) RTAlloc(unit->mWorld, sizeof(float)*numChannels);
+    uint32 numInputs = unit->mNumInputs;
+    uint32 maxScopeChannels = unit->mWorld->mBelaMaxScopeChannels;
+    if(numInputs > maxScopeChannels) {
+       rt_printf("BelaScopeUGen warning: can't scope %i channels, maxBelaScopeChannels is set to %i\n", numInputs, maxScopeChannels);
+    }
+    unit->noScopeChannels = sc_min(numInputs, maxScopeChannels);
+    unit->maxScopeChannels = maxScopeChannels;
+    unit->frameData = (float*) RTAlloc(unit->mWorld, sizeof(float)*unit->noScopeChannels);
     unit->belaScope = unit->mWorld->mBelaScope;
-    unit->noScopeChannels = numChannels;
     // initiate first sample
-    BelaScopeUGen_next( unit, 1);
+    BelaScopeUGen_next(unit, 1);
     // set calculation method
     SETCALC(BelaScopeUGen_next);
 }

@@ -98,6 +98,7 @@ struct WorldOptions
 	float mBelaADCLevel;
 	uint32 mBelaNumMuxChannels;
 	uint32 mBelaPRU;
+	uint32 mBelaMaxScopeChannels;
 #endif
 };
 

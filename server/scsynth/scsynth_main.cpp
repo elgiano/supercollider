@@ -97,6 +97,7 @@ void Usage()
 		"   -y <bela-adc-level>\n"
 		"   -g <bela-multiplexer-channels>\n"
 		"   -T <bela-pru-id>\n"
+		"   -O <bela-oscilloscope-max-channels>\n"
 #endif
 #if (_POSIX_MEMLOCK - 0) >=  200112L
 		"   -L enable memory locking\n"
@@ -183,6 +184,7 @@ int main(int argc, char* argv[])
 	options.mBelaDACLevel = 0;
 	options.mBelaNumMuxChannels = 0;
 	options.mBelaPRU = 1;
+    options.mBelaMaxScopeChannels = 2;
 #endif
 
 	for (int i=1; i<argc;) {
@@ -368,6 +370,10 @@ int main(int argc, char* argv[])
                         case 'T' :
 				checkNumArgs(2);
 				options.mBelaPRU = atoi(argv[j+1]);
+				break;
+                        case 'O' :
+				checkNumArgs(2);
+				options.mBelaMaxScopeChannels = atoi(argv[j+1]);
 				break;
 #endif
 			case 'V' :

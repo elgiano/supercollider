@@ -114,6 +114,7 @@ struct World
 #ifdef BELA
 	BelaContext *mBelaContext;
 	Scope *mBelaScope;
+	uint32 mBelaMaxScopeChannels;
 // 	uint32 mBelaAnalogChannels;
 	uint32 mBelaAnalogInputChannels;
 	uint32 mBelaAnalogOutputChannels;

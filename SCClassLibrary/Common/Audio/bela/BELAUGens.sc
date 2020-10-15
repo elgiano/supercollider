@@ -93,12 +93,12 @@ DigitalIO : UGen {
     }
 }
 
-/* input 1: max number of scope channels
- * input 2: bus number
+/* input 1: bus
+ * input 2: number of channels to scope
  */
 BelaScopeUGen : UGen {
-    *ar { arg maxChannels, busnum;
-       ^super.performList('new1', 'audio', maxChannels, In.ar(busnum, maxChannels));
+    *ar { arg busnum, numChannels;
+       ^super.performList('new1', 'audio', In.ar(busnum, numChannels));
     }
     numOutputs { ^0 }
     writeOutputSpecs {}

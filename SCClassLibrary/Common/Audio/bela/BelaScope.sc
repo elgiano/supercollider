@@ -1,8 +1,7 @@
 BelaScope {
 
 	classvar <serverScopes;
-	var <server, <maxChannels, <bus, <node;
-	var bootFunction, treeFunction;
+	var <server, <bus, <node;
 
 	*scope { |channelOffset, signals, server|
 		var scope = serverScopes[server ? Server.default];
@@ -10,6 +9,7 @@ BelaScope {
 				^scope.scope(channelOffset, signals);
 		} {
 				// TODO: BelaScope needs to be initialized for server
+				this.new(server).scope(channelOffset, signals)
 		};
 	}
 
@@ -17,15 +17,11 @@ BelaScope {
 		serverScopes = IdentityDictionary[];
 	}
 
-	*new { |server, maxChannels=8|
+	*new { |server|
 		server = server ? Server.default;
-		maxChannels = if(maxChannels > 0) { maxChannels } { 8 };
-
-		if(serverScopes[server].isNil) {
-				serverScopes[server] = super.newCopyArgs(server, maxChannels).init;
-		}{
-				// scope already exists, check maxChannels
-		};
+		serverScopes[server] ?? {
+			serverScopes[server] = super.newCopyArgs(server).init;
+		}
 		^serverScopes[server];
 	}
 
@@ -44,7 +40,7 @@ BelaScope {
 
 		if(channelOffset + signals.size > this.maxChannels) {
 				"BelaScope: can't scope this signal, max number of channels (%) exceeded.\nSignal: %"
-				.format(this.maxChannels).warn;
+				.format(this.maxChannels, signals).warn;
 				^signals;
 		};
 
@@ -58,26 +54,28 @@ BelaScope {
 	}
 
 	init {
-		bootFunction = { this.prReserveScopeBus };
-		treeFunction = { this.prStartScope };
-
-		ServerBoot.add(bootFunction, this.server);
-		ServerTree.add(treeFunction, this.server);
+		ServerBoot.add(this, this.server);
+		ServerTree.add(this, this.server);
 		if(this.server.serverRunning){
-				bootFunction.value();
-				treeFunction.value();
+				this.doOnServerBoot;
+				this.doOnServerTree;
 		}
 	}
 
+	maxChannels { ^this.server.options.belaMaxScopeChannels }
+
 	prReserveScopeBus {
 		// TODO: check if bus is already reserved, or if maxChannels mismatch
-		bus = Bus.audio(server, maxChannels);
+		bus = Bus.audio(server, this.maxChannels);
 	}
 
 	prStartScope {
 		// TODO: check if node is already in place and running
-		node = { BelaScopeUGen.ar(this.maxChannels, this.bus); Silent.ar }.play(this.server, addAction: \addAfter);
+		node = { BelaScopeUGen.ar(this.bus, this.maxChannels); Silent.ar }.play(this.server, addAction: \addAfter);
 	}
+	
+	doOnServerBoot { this.prReserveScopeBus }
+	doOnServerTree { this.prStartScope }
 }
 
 + UGen {
