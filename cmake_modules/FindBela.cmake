@@ -42,6 +42,7 @@ message("Searching for BELA man: config ${BELA_CONFIG}")
     string(STRIP "${BELA_C_FLAGS}" BELA_C_FLAGS)
     execute_process(COMMAND ${BELA_CONFIG} --cxxflags OUTPUT_VARIABLE BELA_CXX_FLAGS)
     string(STRIP "${BELA_CXX_FLAGS}" BELA_CXX_FLAGS)
+    SET(BELA_CXX_FLAGS "${BELA_CXX_FLAGS} -DBELA_DONT_INCLUDE_UTILITIES")
   endif (BELA_CONFIG)
 
   if (BELA_CONFIG)
