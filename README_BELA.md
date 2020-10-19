@@ -79,6 +79,8 @@ Then here's how to build:
     mkdir ~/supercollider/build
     cd ~/supercollider/build
 
+Several options here:
+
     # here's the command WITHOUT ccache
     cmake .. -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DNO_X11=ON -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSC_HIDAPI=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DNATIVE=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela
 
@@ -95,6 +97,79 @@ Next we install:
 
     make install
 
+### Cross-compiling
+
+On a Linux machine:
+
+- you need a built bela-image-builder, or just copy the whole filesystem from the baord you want to build for
+- download a cross compiler, e.g., for Bela Images v0.3.x :  http://releases.linaro.org/components/toolchain/binaries/6.3-2017.05/arm-linux-gnueabihf/gcc-linaro-6.3.1-2017.05-x86_64_arm-linux-gnueabihf.tar.xz
+- create a file with the cross-toolchain details, e.g.: `~/Toolchain-arm-linux-gnueabihf.cmake` which contains something like this (edit the `SYSROOT` and `GCC_BASE` variables)
+
+````
+SET(CMAKE_SYSTEM_NAME Linux)
+SET(CMAKE_SYSTEM_VERSION 1)
+
+set(CMAKE_SYSTEM_PROCESSOR arm )
+SET(CMAKE_LIBRARY_ARCHITECTURE arm-linux-gnueabihf)
+
+# where is the target environment
+SET(SYSROOT "$ENV{HOME}/bela-image-builder-stretch/rootfs/")
+
+# RPATH - a list of directories which is linked into the executable,
+# supported on most UNIX systems. It is ignored if RUNPATH is present.
+set(FLAGS "${FLAGS} -Wl,-rpath-link,${SYSROOT}/lib/arm-linux-gnueabihf")
+set(FLAGS "${FLAGS} -Wl,-rpath-link,${SYSROOT}/usr/lib/arm-linux-gnueabihf")
+set(FLAGS "${FLAGS} -Wl,-rpath-link,${SYSROOT}/usr/local/lib")
+set(RPATH_FLAGS ${FLAGS})
+
+# specify the cross compiler
+set(GCC_BASE $ENV{HOME}/gcc-linaro-6.3.1-2017.05-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-)
+SET(CMAKE_C_COMPILER ${GCC_BASE}gcc)
+SET(CMAKE_CXX_COMPILER ${GCC_BASE}g++)
+SET(CMAKE_ASM_COMPILER ${GCC_BASE}as)
+SET(CMAKE_RANLIB ${CROSS_COMPILER}ranlib)
+UNSET(CMAKE_C_FLAGS CACHE)
+UNSET(CMAKE_CXX_FLAGS CACHE)
+
+#link_libraries("-no-pie")
+set(COMMON_FLAGS "-no-pie -fno-pie")
+set(CMAKE_EXE_LINKER_FLAGS "-no-pie")
+set(CMAKE_SHARED_LINKER_FLAGS "-no-pie")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} ${RPATH_FLAGS}" CACHE STRING "c++ flags" FORCE)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS} ${RPATH_FLAGS}" CACHE STRING "c flags" FORCE)
+
+set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS}" CACHE INTERNAL "c link flags" FORCE)
+set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS}" CACHE INTERNAL "c++ link flags" FORCE)
+
+SET(CMAKE_SYSROOT ${SYSROOT})
+SET(CMAKE_FIND_ROOT_PATH ${SYSROOT})
+
+# search for programs in the build host directories
+SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER) # for xeno-config an bela-config we have to manually override this there
+# for libraries and headers in the target directories
+SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+```
+- create a couple of symlinks to make things easier:
+```
+ln -s ~/bela-image-builder-stretch/rootfs/usr/xenomai /usr/xenomai
+ln -s ~/bela-image-builder-stretch/rootfs/lib/arm-linux-gnueabihf/ /lib/arm-linux-gnueabihf
+```
+- configure:
+```
+cd supercollider
+mkdir build && cd build
+cmake .. -DCMAKE_TOOLCHAIN_FILE=~/Toolchain-arm-linux-gnueabihf.cmake -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DNO_X11=ON -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSC_HIDAPI=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela -DSC_ABLETON_LINK=OFF
+```
+- build:
+```
+make -j20
+```
+- create a debian package to be installed on the board:
+```
+cpack -G DEB -D CPACK_PACKAGE_CONTACT="Your Name <your.name@domain.com" -D CPACK_DEBIAN_PACKAGE_ARCHITECTURE="armhf" -D CPACK_CMAKE_GENERATOR=Ninja -D CPACK_PACKAGING_INSTALL_PREFIX="/usr/local"
+```
+(the `CPACK_CMAKE_GENERATOR=Ninja` is a trick to prevent the `preinstall` target from rebuilding the whole thing slower (see [here](https://stackoverflow.com/a/57530945/2958741)).
 
 Running it
 ==========
