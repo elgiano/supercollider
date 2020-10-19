@@ -1379,11 +1379,11 @@ void BelaScopeUGen_Ctor(BelaScopeUGen *unit)
     uint32 numInputs = unit->mNumInputs;
     uint32 maxScopeChannels = unit->mWorld->mBelaMaxScopeChannels;
     if(numInputs > maxScopeChannels) {
-       rt_printf("BelaScopeUGen warning: can't scope %i channels, maxBelaScopeChannels is set to %i\n", numInputs, maxScopeChannels);
+       rt_fprintf(stderr, "BelaScopeUGen warning: can't initialise scope %i channels, maxBelaScopeChannels is set to %i\n", numInputs, maxScopeChannels);
     }
     BelaScopeUGen::instanceCount++;
     if(BelaScopeUGen::instanceCount > 1) {
-        rt_printf("BelaScopeUGen warning: creating a new instance when one is already active. This one will do nothing.\n"); 
+        rt_fprintf(stderr, "BelaScopeUGen warning: creating a new instance when one is already active. This one will do nothing.\n"); 
         SETCALC(BelaScopeUGen_noop);
         return;
     };

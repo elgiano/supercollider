@@ -148,7 +148,8 @@ bool sc_belaSetup(BelaContext* belaContext, void* userData)
     // cast void pointer
 	SC_BelaDriver *belaDriver = (SC_BelaDriver*) userData;
 	gBelaSampleRate = belaContext->audioSampleRate;
-	belaDriver->mBelaScope->setup(8, gBelaSampleRate);
+	if(belaDriver->mBelaScope)
+		belaDriver->mBelaScope->setup(belaDriver->mBelaMaxScopeChannels, gBelaSampleRate);
 	return true;
 }
 

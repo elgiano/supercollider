@@ -60,7 +60,7 @@ ServerOptions {
 	var <>adcLevel;
 	var <>numMultiplexChannels;
 	var <>belaPRU;
-	var <>belaMaxScopeChannels = 2;
+	var <>belaMaxScopeChannels = 0;
 
 	var <>recHeaderFormat="aiff";
 	var <>recSampleFormat="float";

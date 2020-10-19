@@ -51,6 +51,12 @@ BelaScope {
 	}
 
 	init {
+		if(this.maxChannels <= 0) {
+			Error(
+				"BelaScope: can't instantiate on server '%' because its option belaMaxScopeChannels is %"
+				.format(server, this.maxChannels)
+			).throw;
+		};
 		ServerBoot.add(this, this.server);
 		ServerTree.add(this, this.server);
 		if(this.server.serverRunning){

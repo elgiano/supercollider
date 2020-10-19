@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
 	options.mBelaDACLevel = 0;
 	options.mBelaNumMuxChannels = 0;
 	options.mBelaPRU = 1;
-    options.mBelaMaxScopeChannels = 2;
+	options.mBelaMaxScopeChannels = 0;
 #endif
 
 	for (int i=1; i<argc;) {
