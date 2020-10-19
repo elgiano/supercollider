@@ -20,6 +20,11 @@ if (BELA_CFLAGS AND BELA_CXXFLAGS AND BELA_LDFLAGS)
   set(BELA_FOUND TRUE)
 else (BELA_CFLAGS AND BELA_CXXFLAGS AND BELA_LDFLAGS)
   # Bela comes with its own ...-config program to get configuration flags
+  if (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM)
+    # if cross compiling, we want to find this program only from the sysroot
+    set(CACHED ${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM})
+    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
+  endif (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM)
   find_program(BELA_CONFIG
     NAMES
       bela-config
@@ -29,6 +34,10 @@ else (BELA_CFLAGS AND BELA_CXXFLAGS AND BELA_LDFLAGS)
       /usr/local/bin
       /usr/bin
   )
+  if (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM)
+    # restore the previous value
+    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ${CACHED})
+  endif (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM)
 message("Searching for BELA man: config ${BELA_CONFIG}")
 
   if (BELA_CONFIG)

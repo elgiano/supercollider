@@ -96,6 +96,11 @@ if (XENOMAI_LIRARIES AND XENOMAI_INCLUDE_DIRS AND XENOMAI_DEFINITIONS)
   set(XENOMAI_FOUND TRUE)
 else (XENOMAI_LIRARIES AND XENOMAI_INCLUDE_DIRS AND XENOMAI_DEFINITIONS)
   # Xenomai comes with its own ...-config program to get cflags and ldflags
+  if (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM)
+    # if cross compiling, we want to find this program only from the sysroot
+    set(CACHED ${CMAKE_FIND_ROOT_PATH_MODE_PROGRAM})
+    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY)
+  endif (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM)
   find_program(XENOMAI_XENO_CONFIG
     NAMES
       xeno-config
@@ -105,6 +110,10 @@ else (XENOMAI_LIRARIES AND XENOMAI_INCLUDE_DIRS AND XENOMAI_DEFINITIONS)
       /usr/local/bin
       /usr/bin
   )
+  if (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM)
+    # restore the previous value
+    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ${CACHED})
+  endif (CMAKE_FIND_ROOT_PATH_MODE_PROGRAM)
 
   if (XENOMAI_XENO_CONFIG)
     set(XENOMAI_FOUND TRUE)
