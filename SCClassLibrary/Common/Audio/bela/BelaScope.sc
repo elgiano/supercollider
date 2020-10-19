@@ -10,7 +10,7 @@ BelaScope {
 	}
 
 	scope { |channelOffset, signals|
-		
+
 		var ugens = this.class.prInputAsAudioRateUGens(signals);
 
 		if(ugens.notNil and: this.prIsValidScopeChannel(channelOffset, signals)) {
@@ -74,15 +74,15 @@ BelaScope {
 
 	prStartScope {
 		if(node.notNil) {
-			if (node.isRunning) { 
+			if (node.isRunning) {
 				warn("BelaScope: can't instantiate a new BelaScopeUGen, because one is already active.");
 				^this
-			} 
+			}
 		};
 
 		if(UGen.buildSynthDef.notNil) {
 			// When BelaScope.init is called inside a SynthDef function (e.g. by UGen:belaScope),
-			// this.prStartSynth breaks that SynthDef:build, because it attempts to create an inner SynthDef. 
+			// this.prStartSynth breaks that SynthDef:build, because it attempts to create an inner SynthDef.
 			// Fixed by forking.
 			fork{ this.prStartSynth };
 		} {
@@ -98,7 +98,7 @@ BelaScope {
 		.play(this.server, addAction: \addAfter)
 		.register;
 	}
-	
+
 	doOnServerBoot { this.prReserveScopeBus; ServerBoot.remove(this) }
 	doOnServerTree { this.prStartScope; ServerTree.remove(this) }
 
@@ -128,11 +128,11 @@ BelaScope {
 	}
 
 	prIsValidScopeChannel { |channelOffset, signals=#[]|
-		if(channelOffset.isNumber.not) {			
+		if(channelOffset.isNumber.not) {
 			warn("BelaScope: channel offset must be a number, but (%) is provided.".format(channelOffset));
 			^false;
 		};
-		if(channelOffset < 0) {			
+		if(channelOffset < 0) {
 			warn("BelaScope: channel offset must be a positive number, but (%) is provided.".format(channelOffset));
 			^false;
 		};
@@ -143,7 +143,7 @@ BelaScope {
 			);
 			^false;
 		};
-		^true;   
+		^true;
 	}
 }
 
@@ -169,7 +169,6 @@ BelaScope {
 	belaScope { |scopeChannel, numChannels = 1, target, outbus = 0, fadeTime = 0.02, addAction = \addToHead, args|
 		var synth  = this.play(target, outbus, fadeTime, addAction, args);
 		var monitor = BelaScope.monitorBus(scopeChannel, outbus, numChannels, target);
-		
 		^synth.onFree { if(monitor.notNil) { monitor.free } };
 	}
 }
