@@ -190,11 +190,17 @@ ProxyMixer : JITGui {
 					if (mod.notNil and: { mod.isAlt }) {
 						NdefGui(pxgui.object);
 					} {
-						this.switchSize(2, isSmall);
-						editGui.object_(pxgui.object);
-						arGuis.do { |gui| gui.edBut.value_(0) };
-						krGuis.do { |gui| gui.edBut.value_(0) };
-						btn.value_(1);
+						if(but.value == 1) {
+							this.switchSize(2, isSmall);
+							editGui.object_(pxgui.object);
+							arGuis.do { |gui| gui.edBut.value_(0) };
+							krGuis.do { |gui| gui.edBut.value_(0) };
+							btn.value_(1);
+						} {
+							this.switchSize(1, isSmall);
+							editGui.object_(nil);
+							btn.value_(0);
+						}
 					}
 				};
 			});
