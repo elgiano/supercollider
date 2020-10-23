@@ -458,6 +458,7 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate) {
         scprintf("Speakers are not muted.\n");
     }
 
+    settings->verbose = mWorld->mVerbosity;
     // Initialise the PRU audio device. This function prepares audio rendering in Bela. It should be called from main()
     // sometime after command line option parsing has finished. It will initialise the rendering system, which in the
     // process will result in a call to the user-defined setup() function.
