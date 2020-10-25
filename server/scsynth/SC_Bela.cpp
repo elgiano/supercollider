@@ -135,6 +135,12 @@ void sc_belaRender(BelaContext* belaContext, void* userData) {
     driver->BelaAudioCallback(belaContext);
 }
 
+void sc_belaAudioThreadDone(BelaContext*, void* userData) {
+    SC_BelaDriver* driver = (SC_BelaDriver*)userData;
+    if (driver)
+        driver->SignalReceived(0);
+}
+
 void sc_belaSignal(int arg) {
     if (mBelaDriverInstance != 0)
         mBelaDriverInstance->SignalReceived(arg);
@@ -317,6 +323,12 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate) {
     Bela_defaultSettings(settings);
     settings->setup = sc_belaSetup;
     settings->render = sc_belaRender;
+#if (BELA_MAJOR_VERSION == 1 && BELA_MINOR_VERSION >= 8) || (BELA_MAJOR_VERSION > 1)
+    // if the feature is supported on Bela, add a callback to be called when
+    // the audio thread stops. This is useful e.g.: to gracefully exit from
+    // scsynth when pressing the Bela button
+    settings->audioThreadDone = sc_belaAudioThreadDone;
+#endif // BELA >= 1.8
     settings->interleave = 0;
     settings->uniformSampleRate = 1;
     settings->analogOutputsPersist = 0;
@@ -495,8 +507,8 @@ bool SC_BelaDriver::DriverStop() {
     return true;
 }
 
-void SC_BelaDriver::SignalReceived(int) {
-    scprintf("SC_BelaDriver: interrupt; terminating\n");
+void SC_BelaDriver::SignalReceived(int signal) {
+    scprintf("SC_BelaDriver: signal received: %d; terminating\n", signal);
     mWorld->hw->mTerminating = true;
     mWorld->hw->mQuitProgram->post();
 }
