@@ -42,7 +42,7 @@ struct MultiplexAnalogIn : public Unit {
 
 
 struct AnalogIn : public Unit {
-    // TODO: can we remove this ?
+    int mAnalogPin;
 };
 
 struct AnalogOut : public Unit {
@@ -295,6 +295,20 @@ void MultiplexAnalogIn_Ctor(MultiplexAnalogIn* unit) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+// returns false if pin is out of range, so that _next functions can avoid to write there
+bool AnalogIn_updatePin(AnalogIn* unit, int newAnalogPin) {
+    BelaContext* context = unit->mWorld->mBelaContext;
+    bool isValid = (newAnalogPin >= 0) && (newAnalogPin < context->analogInChannels);
+    if (newAnalogPin != unit->mAnalogPin) {
+        unit->mAnalogPin = newAnalogPin;
+        if (!isValid) {
+            rt_fprintf(stderr, "AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
+                       context->analogInChannels, newAnalogPin);
+        }
+    }
+    return isValid;
+}
+
 void AnalogIn_next_aa(AnalogIn* unit, int inNumSamples) {
     World* world = unit->mWorld;
     int bufLength = world->mBufLength;
@@ -310,10 +324,7 @@ void AnalogIn_next_aa(AnalogIn* unit, int inNumSamples) {
     for (unsigned int n = 0; n < inNumSamples; n++) {
         analogPin = (int)fin[n];
         // 	analogPin = sc_clip( analogPin, 0.0, context->analogInChannels );
-        if ((analogPin < 0) || (analogPin >= context->analogInChannels)) {
-            rt_printf("AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
-                      context->analogInChannels, analogPin);
-        } else {
+        if (AnalogIn_updatePin(unit, analogPin)) {
             analogValue = analogReadNI(context, n, analogPin);
             //         if(analogPin == 0)
             //         {
@@ -332,17 +343,11 @@ void AnalogIn_next_ak(AnalogIn* unit, int inNumSamples) {
     int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
-    int analogPin = (float)IN0(0);
+    int analogPin = (int)IN0(0);
     float* out = ZOUT(0);
     float analogValue = 0;
 
-    if ((analogPin < 0) || (analogPin >= context->analogInChannels)) {
-        rt_printf("AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels,
-                  analogPin);
-        for (unsigned int n = 0; n < inNumSamples; n++) {
-            *++out = 0;
-        }
-    } else {
+    if (AnalogIn_updatePin(unit, analogPin)) {
         for (unsigned int n = 0; n < inNumSamples; n++) {
             analogValue = analogReadNI(context, n, analogPin);
             //             if(analogPin == 0)
@@ -354,6 +359,10 @@ void AnalogIn_next_ak(AnalogIn* unit, int inNumSamples) {
             //             }
             *++out = analogValue;
         }
+    } else {
+        for (unsigned int n = 0; n < inNumSamples; n++) {
+            *++out = 0.0;
+        }
     }
 }
 
@@ -363,14 +372,12 @@ void AnalogIn_next_kk(AnalogIn* unit, int inNumSamples) {
     int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
-    int analogPin = (float)IN0(0);
+    int analogPin = (int)IN0(0);
 
-    if ((analogPin < 0) || (analogPin >= context->analogInChannels)) {
-        rt_printf("AnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogInChannels,
-                  analogPin);
-        ZOUT0(0) = 0.0;
-    } else {
+    if (AnalogIn_updatePin(unit, analogPin)) {
         ZOUT0(0) = analogReadNI(context, 0, analogPin);
+    } else {
+        ZOUT0(0) = 0.0;
     }
 }
 
@@ -381,6 +388,8 @@ void AnalogIn_Ctor(AnalogIn* unit) {
         rt_printf("AnalogIn Error: the UGen needs BELA analog enabled, with 4 or 8 channels\n");
         return;
     }
+
+    unit->mAnalogPin = -1;
 
     // initiate first sample
     AnalogIn_next_kk(unit, 1);
