@@ -46,7 +46,7 @@ struct AnalogIn : public Unit {
 };
 
 struct AnalogOut : public Unit {
-    // TODO: can we remove this ?
+    int mAnalogPin;
 };
 
 // static digital pin, static function (in)
@@ -404,6 +404,20 @@ void AnalogIn_Ctor(AnalogIn* unit) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+// returns false if pin is out of range, so that _next functions can avoid to write there
+bool AnalogOut_updatePin(AnalogOut* unit, int newAnalogPin) {
+    BelaContext* context = unit->mWorld->mBelaContext;
+    bool isValid = (newAnalogPin >= 0) && (newAnalogPin < context->analogOutChannels);
+    if (newAnalogPin != unit->mAnalogPin) {
+        unit->mAnalogPin = newAnalogPin;
+        if (!isValid) {
+            rt_fprintf(stderr, "AnalogOut warning: analog pin must be between %i and %i, it is %i \n", 0,
+                       context->analogOutChannels, newAnalogPin);
+        }
+    }
+    return isValid;
+}
+
 void AnalogOut_next_aaa(AnalogOut* unit, int inNumSamples) {
     World* world = unit->mWorld;
     int bufLength = world->mBufLength;
@@ -417,12 +431,9 @@ void AnalogOut_next_aaa(AnalogOut* unit, int inNumSamples) {
     for (unsigned int n = 0; n < inNumSamples; n++) {
         // read input
         analogPin = (int)fin[n];
-        if ((analogPin < 0) || (analogPin >= context->analogOutChannels)) {
-            rt_printf("AnalogOut warning: analog pin must be between %i and %i, it is %i \n", 0,
-                      context->analogOutChannels, analogPin);
-        } else {
+        if (AnalogOut_updatePin(unit, analogPin)) {
             newinput = in[n]; // read next input sample
-            analogWriteOnceNI(context, n, analogPin, newinput);
+            analogWriteOnceNI(context, n, unit->mAnalogPin, newinput);
         }
     }
 }
@@ -436,13 +447,10 @@ void AnalogOut_next_aka(AnalogOut* unit, int inNumSamples) {
     float* in = IN(1);
 
     float newinput = 0;
-    if ((analogPin < 0) || (analogPin >= context->analogOutChannels)) {
-        rt_printf("AnalogOut warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogOutChannels,
-                  analogPin);
-    } else {
+    if (AnalogOut_updatePin(unit, analogPin)) {
         for (unsigned int n = 0; n < inNumSamples; n++) {
             newinput = in[n]; // read next input sample
-            analogWriteOnceNI(context, n, analogPin, newinput);
+            analogWriteOnceNI(context, n, unit->mAnalogPin, newinput);
         }
     }
 }
@@ -459,11 +467,8 @@ void AnalogOut_next_aak(AnalogOut* unit, int inNumSamples) {
     for (unsigned int n = 0; n < inNumSamples; n++) {
         // read input
         analogPin = (int)fin[n];
-        if ((analogPin < 0) || (analogPin >= context->analogOutChannels)) {
-            rt_printf("AnalogOut warning: analog pin must be between %i and %i, it is %i \n", 0,
-                      context->analogOutChannels, analogPin);
-        } else {
-            analogWriteOnceNI(context, n, analogPin, in);
+        if (AnalogOut_updatePin(unit, analogPin)) {
+            analogWriteOnceNI(context, n, unit->mAnalogPin, in);
         }
     }
 }
@@ -477,11 +482,8 @@ void AnalogOut_next_kk(AnalogOut* unit, int inNumSamples) {
     int analogPin = (int)IN0(0); // analog in pin, can be modulated
     float in = IN0(1);
 
-    if ((analogPin < 0) || (analogPin >= context->analogOutChannels)) {
-        rt_printf("AnalogOut warning: analog pin must be between %i and %i, it is %i \n", 0, context->analogOutChannels,
-                  analogPin);
-    } else {
-        analogWriteNI(context, 0, analogPin, in);
+    if (AnalogOut_updatePin(unit, analogPin)) {
+        analogWriteNI(context, 0, unit->mAnalogPin, in);
     }
 }
 
@@ -492,6 +494,8 @@ void AnalogOut_Ctor(AnalogOut* unit) {
         rt_printf("AnalogOut Error: the UGen needs BELA analog enabled\n");
         return;
     }
+
+    unit->mAnalogPin = -1;
 
     // initiate first sample
     AnalogOut_next_kk(unit, 1);
