@@ -1,0 +1,12 @@
+instancemethods::
+
+subsection:: Extensions by BelaScope
+
+method:: belaScope
+Scope all channels from this Bus to BeLa's Oscilloscope (see link::Classes/BelaScope:: for required setup).
+It is required that this Bus is on Server running on a BeLa, which is thus capable of using BelaScope.
+
+argument:: scopeChannel
+Bela's oscilloscope channel to start scoping on.
+
+returns:: A link::Classes/Monitor::, linking this Bus to BelaScope's bus.
