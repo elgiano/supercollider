@@ -159,7 +159,7 @@ ln -s ~/bela-image-builder-stretch/rootfs/lib/arm-linux-gnueabihf/ /lib/arm-linu
 ```
 cd supercollider
 mkdir build && cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=~/Toolchain-arm-linux-gnueabihf.cmake -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DNO_X11=ON -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSC_HIDAPI=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela -DSC_ABLETON_LINK=OFF
+cmake .. -DCMAKE_TOOLCHAIN_FILE=~/Toolchain-arm-linux-gnueabihf.cmake -DNOVA_SIMD=ON -DSSE=OFF -DSSE2=OFF -DINSTALL_HELP=OFF -DNO_X11=ON -DSC_QT=OFF -DSC_IDE=OFF -DSC_EL=OFF -DSC_ED=OFF -DSC_VIM=OFF -DSC_HIDAPI=OFF -DSUPERNOVA=OFF -DNO_AVAHI=ON -DENABLE_TESTSUITE=OFF -DAUDIOAPI=bela -DSC_ABLETON_LINK=ON -DCMAKE_INSTALL_PREFIX=/usr/
 ```
 - build:
 ```
@@ -167,7 +167,7 @@ make -j20
 ```
 - create a debian package to be installed on the board:
 ```
-cpack -G DEB -D CPACK_PACKAGE_CONTACT="Your Name <your.name@domain.com" -D CPACK_DEBIAN_PACKAGE_ARCHITECTURE="armhf" -D CPACK_CMAKE_GENERATOR=Ninja -D CPACK_PACKAGING_INSTALL_PREFIX="/usr/local"
+cpack -G DEB -D CPACK_PACKAGE_CONTACT="Your Name <your.name@domain.com>" -D CPACK_DEBIAN_PACKAGE_ARCHITECTURE="armhf" -D CPACK_CMAKE_GENERATOR=Ninja
 ```
 (the `CPACK_CMAKE_GENERATOR=Ninja` is a trick to prevent the `preinstall` target from rebuilding the whole thing slower (see [here](https://stackoverflow.com/a/57530945/2958741)).
 
