@@ -36,6 +36,13 @@ int rt_fprintf(FILE* stream, const char* format, ...);
 
 static InterfaceTable* ft;
 
+static inline void BelaUgen_init_output(Unit* unit) { (unit->mCalcFunc)(unit, 1); }
+
+static inline void BelaUgen_disable(Unit* unit) {
+    SETCALC(ClearUnitOutputs);
+    BelaUgen_init_output(unit);
+}
+
 struct MultiplexAnalogIn : public Unit {
     // TODO: can we remove this ?
 };
@@ -87,7 +94,6 @@ struct BelaScopeChannel : public Unit
 
 void MultiplexAnalogIn_next_aaa(MultiplexAnalogIn* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float* fin = IN(0); // analog in pin, can be modulated
@@ -104,9 +110,9 @@ void MultiplexAnalogIn_next_aaa(MultiplexAnalogIn* unit, int inNumSamples) {
         muxChannel = (int)fmux[n];
         if ((analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0)
             || (muxChannel > context->multiplexerChannels)) {
-            rt_printf("MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
+            rt_fprintf(stderr, "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
                       context->analogInChannels, analogPin);
-            rt_printf("MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0,
+            rt_fprintf(stderr, "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0,
                       context->multiplexerChannels, muxChannel);
         } else {
             analogValue = multiplexerAnalogRead(
@@ -125,7 +131,6 @@ void MultiplexAnalogIn_next_aaa(MultiplexAnalogIn* unit, int inNumSamples) {
 
 void MultiplexAnalogIn_next_aak(MultiplexAnalogIn* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float* fin = IN(0); // analog in pin, can be modulated
@@ -140,9 +145,9 @@ void MultiplexAnalogIn_next_aak(MultiplexAnalogIn* unit, int inNumSamples) {
         analogPin = (int)fin[n];
         if ((analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0)
             || (muxChannel > context->multiplexerChannels)) {
-            rt_printf("MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
+            rt_fprintf(stderr, "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
                       context->analogInChannels, analogPin);
-            rt_printf("MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0,
+            rt_fprintf(stderr, "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0,
                       context->multiplexerChannels, muxChannel);
         } else {
             analogValue = multiplexerAnalogRead(
@@ -161,7 +166,6 @@ void MultiplexAnalogIn_next_aak(MultiplexAnalogIn* unit, int inNumSamples) {
 
 void MultiplexAnalogIn_next_aka(MultiplexAnalogIn* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int analogPin = (float)IN0(0);
@@ -176,9 +180,9 @@ void MultiplexAnalogIn_next_aka(MultiplexAnalogIn* unit, int inNumSamples) {
         muxChannel = (int)fmux[n];
         if ((analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0)
             || (muxChannel > context->multiplexerChannels)) {
-            rt_printf("MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
+            rt_fprintf(stderr, "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
                       context->analogInChannels, analogPin);
-            rt_printf("MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0,
+            rt_fprintf(stderr, "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0,
                       context->multiplexerChannels, muxChannel);
         } else {
             analogValue = multiplexerAnalogRead(
@@ -197,7 +201,6 @@ void MultiplexAnalogIn_next_aka(MultiplexAnalogIn* unit, int inNumSamples) {
 
 void MultiplexAnalogIn_next_akk(MultiplexAnalogIn* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int analogPin = (float)IN0(0);
@@ -207,9 +210,9 @@ void MultiplexAnalogIn_next_akk(MultiplexAnalogIn* unit, int inNumSamples) {
 
     if ((analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0)
         || (muxChannel > context->multiplexerChannels)) {
-        rt_printf("MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
+        rt_fprintf(stderr, "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
                   context->analogInChannels, analogPin);
-        rt_printf("MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0,
+        rt_fprintf(stderr, "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0,
                   context->multiplexerChannels, muxChannel);
         for (unsigned int n = 0; n < inNumSamples; n++) {
             *++out = 0;
@@ -232,18 +235,17 @@ void MultiplexAnalogIn_next_akk(MultiplexAnalogIn* unit, int inNumSamples) {
 
 void MultiplexAnalogIn_next_kkk(MultiplexAnalogIn* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int analogPin = (float)IN0(0);
     int muxChannel = (float)IN0(1);
 
     if ((analogPin < 0) || (analogPin >= context->analogInChannels)) {
-        rt_printf("MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
+        rt_fprintf(stderr, "MultiplexAnalogIn warning: analog pin must be between %i and %i, it is %i \n", 0,
                   context->analogInChannels, analogPin);
         ZOUT0(0) = 0.0;
     } else if ((muxChannel < 0) || (muxChannel > context->multiplexerChannels)) {
-        rt_printf("MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0,
+        rt_fprintf(stderr, "MultiplexAnalogIn warning: muxChannel must be between %i and %i, it is %i \n", 0,
                   context->multiplexerChannels, muxChannel);
         ZOUT0(0) = 0.0;
     } else {
@@ -255,17 +257,12 @@ void MultiplexAnalogIn_next_kkk(MultiplexAnalogIn* unit, int inNumSamples) {
 void MultiplexAnalogIn_Ctor(MultiplexAnalogIn* unit) {
     BelaContext* context = unit->mWorld->mBelaContext;
 
-    if (context->analogFrames == 0 || context->analogFrames > context->audioFrames) {
-        rt_printf("MultiplexAnalogIn Error: the UGen needs BELA analog enabled, with 4 or 8 channels\n");
-        return;
-    }
-    if (context->multiplexerChannels == 0) {
-        rt_printf("MultiplexAnalogIn Error: the UGen needs BELA Multiplexer Capelet enabled\n");
+    if (!context->multiplexerChannels) {
+        BelaUgen_disable(unit);
+        rt_fprintf(stderr, "MultiplexAnalogIn Error: the UGen needs BELA Multiplexer Capelet enabled\n");
         return;
     }
 
-    // initiate first sample
-    MultiplexAnalogIn_next_kkk(unit, 1);
     // set calculation method
     if (unit->mCalcRate == calc_FullRate) {
         if (INRATE(0) == calc_FullRate) {
@@ -285,12 +282,13 @@ void MultiplexAnalogIn_Ctor(MultiplexAnalogIn* unit) {
         }
     } else {
         if ((INRATE(0) == calc_FullRate) || (INRATE(1) == calc_FullRate)) {
-            rt_printf("MultiplexAnalogIn warning: output rate is control rate, so cannot change analog pin or "
+            rt_fprintf(stderr, "MultiplexAnalogIn warning: output rate is control rate, so cannot change analog pin or "
                       "multiplex channel at audio rate\n");
         }
         //             rt_printf("AnalogIn: kk\n");
         SETCALC(MultiplexAnalogIn_next_kkk);
     }
+    BelaUgen_init_output(unit);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,28 +309,16 @@ bool AnalogIn_updatePin(AnalogIn* unit, int newAnalogPin) {
 
 void AnalogIn_next_aa(AnalogIn* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float* fin = IN(0); // analog in pin, can be modulated
     float* out = ZOUT(0);
-    int analogPin = 0;
     float analogValue = 0;
 
-    // context->audioFrames should be equal to inNumSamples
-    //   for(unsigned int n = 0; n < context->audioFrames; n++) {
     for (unsigned int n = 0; n < inNumSamples; n++) {
-        analogPin = (int)fin[n];
-        // 	analogPin = sc_clip( analogPin, 0.0, context->analogInChannels );
+        int analogPin = (int)fin[n];
         if (AnalogIn_updatePin(unit, analogPin)) {
             analogValue = analogReadNI(context, n, analogPin);
-            //         if(analogPin == 0)
-            //         {
-            //             static int count = 0;
-            //             count++;
-            //             if(count % 20000 == 0)
-            //                 rt_printf("AnalogValue = %.3f\n", analogValue);
-            //         }
         }
         *++out = analogValue;
     }
@@ -340,7 +326,6 @@ void AnalogIn_next_aa(AnalogIn* unit, int inNumSamples) {
 
 void AnalogIn_next_ak(AnalogIn* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int analogPin = (int)IN0(0);
@@ -350,13 +335,6 @@ void AnalogIn_next_ak(AnalogIn* unit, int inNumSamples) {
     if (AnalogIn_updatePin(unit, analogPin)) {
         for (unsigned int n = 0; n < inNumSamples; n++) {
             analogValue = analogReadNI(context, n, analogPin);
-            //             if(analogPin == 0)
-            //             {
-            //                 static int count = 0;
-            //                 count++;
-            //                 if(count % 20000 == 0)
-            //                     rt_printf("AnalogValue = %.3f\n", analogValue);
-            //             }
             *++out = analogValue;
         }
     } else {
@@ -369,7 +347,6 @@ void AnalogIn_next_ak(AnalogIn* unit, int inNumSamples) {
 
 void AnalogIn_next_kk(AnalogIn* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int analogPin = (int)IN0(0);
@@ -384,15 +361,14 @@ void AnalogIn_next_kk(AnalogIn* unit, int inNumSamples) {
 void AnalogIn_Ctor(AnalogIn* unit) {
     BelaContext* context = unit->mWorld->mBelaContext;
 
-    if (context->analogFrames == 0 || context->analogFrames > context->audioFrames) {
-        rt_printf("AnalogIn Error: the UGen needs BELA analog enabled, with 4 or 8 channels\n");
+    if (!context->analogInChannels) {
+        BelaUgen_disable(unit);
+        rt_fprintf(stderr, "AnalogIn Error: the UGen needs BELA analog inputs enabled\n");
         return;
     }
 
     unit->mAnalogPin = -1;
 
-    // initiate first sample
-    AnalogIn_next_kk(unit, 1);
     // set calculation method
     if (unit->mCalcRate == calc_FullRate) {
         if (INRATE(0) == calc_FullRate) {
@@ -404,11 +380,12 @@ void AnalogIn_Ctor(AnalogIn* unit) {
         }
     } else {
         if (INRATE(0) == calc_FullRate) {
-            rt_printf("AnalogIn warning: output rate is control rate, so cannot change analog pin at audio rate\n");
+            rt_fprintf(stderr, "AnalogIn warning: output rate is control rate, so cannot change analog pin at audio rate\n");
         }
         //             rt_printf("AnalogIn: kk\n");
         SETCALC(AnalogIn_next_kk);
     }
+    BelaUgen_init_output(unit);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -420,7 +397,7 @@ bool AnalogOut_updatePin(AnalogOut* unit, int newAnalogPin) {
     if (newAnalogPin != unit->mAnalogPin) {
         unit->mAnalogPin = newAnalogPin;
         if (!isValid) {
-            rt_fprintf(stderr, "AnalogOut warning: analog pin must be between %i and %i, it is %i \n", 0,
+            rt_fprintf(stderr, "AnalogOut warning: analog pin must be %i <= pin ,= %i, it is %i\n", 0,
                        context->analogOutChannels, newAnalogPin);
         }
     }
@@ -429,7 +406,6 @@ bool AnalogOut_updatePin(AnalogOut* unit, int newAnalogPin) {
 
 void AnalogOut_next_aaa(AnalogOut* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float* fin = IN(0); // analog in pin, can be modulated
@@ -449,7 +425,6 @@ void AnalogOut_next_aaa(AnalogOut* unit, int inNumSamples) {
 
 void AnalogOut_next_aka(AnalogOut* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int analogPin = (int)IN0(0); // analog in pin, can be modulated
@@ -466,7 +441,6 @@ void AnalogOut_next_aka(AnalogOut* unit, int inNumSamples) {
 
 void AnalogOut_next_aak(AnalogOut* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float* fin = IN(0); // analog in pin, can be modulated
@@ -482,10 +456,8 @@ void AnalogOut_next_aak(AnalogOut* unit, int inNumSamples) {
     }
 }
 
-
 void AnalogOut_next_kk(AnalogOut* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int analogPin = (int)IN0(0); // analog in pin, can be modulated
@@ -499,15 +471,13 @@ void AnalogOut_next_kk(AnalogOut* unit, int inNumSamples) {
 void AnalogOut_Ctor(AnalogOut* unit) {
     BelaContext* context = unit->mWorld->mBelaContext;
 
-    if (context->analogFrames == 0) {
-        rt_printf("AnalogOut Error: the UGen needs BELA analog enabled\n");
+    if (!context->analogOutChannels) {
+        BelaUgen_disable(unit);
+        rt_fprintf(stderr, "AnalogOut Error: the UGen needs BELA analog outputs enabled\n");
         return;
     }
 
     unit->mAnalogPin = -1;
-
-    // initiate first sample
-    AnalogOut_next_kk(unit, 1);
 
     if (unit->mCalcRate == calc_FullRate) { // ugen running at audio rate;
         if (INRATE(0) == calc_FullRate) { // pin changed at audio rate
@@ -523,25 +493,25 @@ void AnalogOut_Ctor(AnalogOut* unit) {
                 SETCALC(AnalogOut_next_aka);
                 //                     rt_printf("AnalogOut: aka\n");
             } else { // analog output only changes at control rate anyways
-                rt_printf("AnalogOut warning: inputs are control rate, so AnalogOut is also running at control rate\n");
+                rt_fprintf(stderr, "AnalogOut warning: inputs are control rate, so AnalogOut is also running at control rate\n");
                 //                     rt_printf("AnalogOut: kk\n");
                 SETCALC(AnalogOut_next_kk);
             }
         }
     } else { // ugen at control rate
         if ((INRATE(0) == calc_FullRate) || (INRATE(1) == calc_FullRate)) {
-            rt_printf("AnalogOut warning: output rate is control rate, so cannot change inputs at audio rate\n");
+            rt_fprintf(stderr, "AnalogOut warning: output rate is control rate, so cannot change inputs at audio rate\n");
         }
         //             rt_printf("AnalogOut: kk\n");
         SETCALC(AnalogOut_next_kk);
     }
+    BelaUgen_init_output(unit);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void DigitalIn_next_a(DigitalIn* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int pinid = unit->mDigitalPin;
@@ -558,7 +528,6 @@ void DigitalIn_next_a(DigitalIn* unit, int inNumSamples) {
 
 void DigitalIn_next_k(DigitalIn* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int pinid = unit->mDigitalPin;
@@ -566,77 +535,50 @@ void DigitalIn_next_k(DigitalIn* unit, int inNumSamples) {
     ZOUT0(0) = (float)digitalValue;
 }
 
-void DigitalIn_next_dummy_a(DigitalIn* unit, int inNumSamples) {
-    float* out = ZOUT(0);
-
-    for (unsigned int n = 0; n < inNumSamples; n++) {
-        *++out = 0.0;
-    }
-}
-
-void DigitalIn_next_dummy_k(DigitalIn* unit, int inNumSamples) { ZOUT0(0) = 0.0; }
-
 void DigitalIn_Ctor(DigitalIn* unit) {
     BelaContext* context = unit->mWorld->mBelaContext;
 
     float fDigitalIn = ZIN0(0); // digital in pin -- cannot change after construction
     unit->mDigitalPin = (int)fDigitalIn;
-    // 	unit->mDigitalPin = (int) sc_clip( fDigitalIn, 0., 15.0 );
     if ((unit->mDigitalPin < 0) || (unit->mDigitalPin >= context->digitalChannels)) {
-        rt_printf("DigitalIn warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
+        rt_fprintf(stderr, "DigitalIn warning: digital pin must be between %i and %i, it is %i\n", 0, context->digitalChannels,
                   unit->mDigitalPin);
-        // initiate first sample
-        if (unit->mCalcRate == calc_FullRate) { // ugen running at audio rate;
-            DigitalIn_next_dummy_a(unit, 1);
-        } else {
-            DigitalIn_next_dummy_k(unit, 1);
-        }
-    } else {
-        pinMode(context, 0, unit->mDigitalPin, INPUT);
-        // initiate first sample
-        DigitalIn_next_k(unit, 1);
-        // set calculation method
-        if (unit->mCalcRate == calc_FullRate) { // ugen running at audio rate;
-            SETCALC(DigitalIn_next_a);
-            //                 rt_printf("DigitalIn: a\n");
-        } else {
-            SETCALC(DigitalIn_next_k);
-            //                 rt_printf("DigitalIn: k\n");
-        }
+        BelaUgen_disable(unit);
+        return;
     }
+    pinMode(context, 0, unit->mDigitalPin, INPUT);
+    // set calculation method
+    if (unit->mCalcRate == calc_FullRate) { // ugen running at audio rate;
+        SETCALC(DigitalIn_next_a);
+        //                 rt_printf("DigitalIn: a\n");
+    } else {
+        SETCALC(DigitalIn_next_k);
+        //                 rt_printf("DigitalIn: k\n");
+    }
+    BelaUgen_init_output(unit);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void DigitalOut_next_a_once(DigitalOut* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int pinid = unit->mDigitalPin;
     float* in = IN(1);
 
-    float newinput = 0;
-    // int lastOut = unit->mLastOut;
-
     for (unsigned int n = 0; n < inNumSamples; n++) {
-        // read input
-        newinput = in[n];
+        float newinput = in[n];
         if (newinput > 0.5) {
             digitalWriteOnce(context, n, pinid, 1);
         } else {
             digitalWriteOnce(context, n, pinid, 0);
         }
-        // else if ( lastOut == 1 ) {
-        // 	  digitalWrite(context, n, pinid, 0 );
-        // 	}
     }
-    // unit->mLastOut = lastOut;
 }
 
 void DigitalOut_next_a(DigitalOut* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int pinid = unit->mDigitalPin;
@@ -663,7 +605,6 @@ void DigitalOut_next_a(DigitalOut* unit, int inNumSamples) {
 
 void DigitalOut_next_k(DigitalOut* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int pinid = unit->mDigitalPin;
@@ -682,60 +623,53 @@ void DigitalOut_next_k(DigitalOut* unit, int inNumSamples) {
     unit->mLastOut = lastOut;
 }
 
-void DigitalOut_next_dummy(DigitalOut* unit, int inNumSamples) {}
-
 void DigitalOut_Ctor(DigitalOut* unit) {
     BelaContext* context = unit->mWorld->mBelaContext;
 
     float fDigital = ZIN0(0); // digital in pin -- cannot change after construction
-    int writeMode =
-        (int)ZIN0(2); // method of writing; 1 = writeOnce; 0 = write on change -- cannot change after construction
+    // method of writing; 1 = writeOnce; 0 = write on change -- cannot change
+    // after construction
+    int writeMode = (int)ZIN0(2);
     unit->mDigitalPin = (int)fDigital;
     unit->mLastOut = 0;
 
     if ((unit->mDigitalPin < 0) || (unit->mDigitalPin >= context->digitalChannels)) {
-        rt_printf("DigitalOut warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
+        rt_fprintf(stderr, "DigitalOut warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
                   unit->mDigitalPin);
-        // initiate first sample
-        DigitalOut_next_dummy(unit, 1);
-        // set calculation method
-        SETCALC(DigitalOut_next_dummy);
-    } else {
-        // initialize first buffer
-        pinMode(context, 0, unit->mDigitalPin, OUTPUT);
-        digitalWrite(context, 0, unit->mDigitalPin, unit->mLastOut);
-        // initiate first sample (unsure if needed)
-        DigitalOut_next_k(unit, 1);
+        BelaUgen_disable(unit);
+    }
+    // initialize first buffer
+    pinMode(context, 0, unit->mDigitalPin, OUTPUT);
+    digitalWrite(context, 0, unit->mDigitalPin, unit->mLastOut);
 
-        if (unit->mCalcRate == calc_FullRate) { // ugen running at audio rate;
-            if (INRATE(1) == calc_FullRate) { // output changed at audio rate
-                if (writeMode) {
-                    //                     rt_printf("DigitalOut: a once\n");
-                    SETCALC(DigitalOut_next_a_once);
-                } else {
-                    //                     rt_printf("DigitalOut: a\n");
-                    SETCALC(DigitalOut_next_a);
-                }
-            } else { // not much reason to actually do audiorate output
-                rt_printf("DigitalOut warning: inputs are control rate, so DigitalOut will run at control rate\n");
-                //                 rt_printf("DigitalOut: k\n");
-                SETCALC(DigitalOut_next_k);
+    if (unit->mCalcRate == calc_FullRate) { // ugen running at audio rate;
+        if (INRATE(1) == calc_FullRate) { // output changed at audio rate
+            if (writeMode) {
+                //                     rt_printf("DigitalOut: a once\n");
+                SETCALC(DigitalOut_next_a_once);
+            } else {
+                //                     rt_printf("DigitalOut: a\n");
+                SETCALC(DigitalOut_next_a);
             }
-        } else { // ugen at control rate
-            if (INRATE(1) == calc_FullRate) {
-                rt_printf("DigitalOut warning: UGen rate is control rate, so cannot change inputs at audio rate\n");
-            }
-            //             rt_printf("DigitalOut: k\n");
+        } else { // not much reason to actually do audiorate output
+            rt_fprintf(stderr, "DigitalOut warning: inputs are control rate, so DigitalOut will run at control rate\n");
+            //                 rt_printf("DigitalOut: k\n");
             SETCALC(DigitalOut_next_k);
         }
+    } else { // ugen at control rate
+        if (INRATE(1) == calc_FullRate) {
+            rt_fprintf(stderr, "DigitalOut warning: UGen rate is control rate, so cannot change inputs at audio rate\n");
+        }
+        //             rt_printf("DigitalOut: k\n");
+        SETCALC(DigitalOut_next_k);
     }
+    BelaUgen_init_output(unit);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void DigitalIO_next_aaaa_once(DigitalIO* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float* pinid = IN(0);
@@ -754,7 +688,7 @@ void DigitalIO_next_aaaa_once(DigitalIO* unit, int inNumSamples) {
         // read input
         newpin = (int)pinid[n];
         if ((newpin < 0) || (newpin >= context->digitalChannels)) {
-            rt_printf("DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
+            rt_fprintf(stderr, "DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
                       context->digitalChannels, newpin);
         } else {
             newDigOut = (int)in[n];
@@ -778,7 +712,6 @@ void DigitalIO_next_aaaa_once(DigitalIO* unit, int inNumSamples) {
 void DigitalIO_next_aaak_once(DigitalIO* unit, int inNumSamples) {
     // pinMode at control rate
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float* pinid = IN(0);
@@ -797,7 +730,7 @@ void DigitalIO_next_aaak_once(DigitalIO* unit, int inNumSamples) {
         for (unsigned int n = 0; n < inNumSamples; n++) {
             newpin = (int)pinid[n];
             if ((newpin < 0) || (newpin >= context->digitalChannels)) {
-                rt_printf("DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
+                rt_fprintf(stderr, "DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
                           context->digitalChannels, newpin);
             } else {
                 pinModeOnce(context, n, newpin, INPUT);
@@ -810,7 +743,7 @@ void DigitalIO_next_aaak_once(DigitalIO* unit, int inNumSamples) {
         for (unsigned int n = 0; n < inNumSamples; n++) {
             newpin = (int)pinid[n];
             if ((newpin < 0) || (newpin >= context->digitalChannels)) {
-                rt_printf("DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
+                rt_fprintf(stderr, "DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
                           context->digitalChannels, newpin);
             } else {
                 pinModeOnce(context, n, newpin, OUTPUT);
@@ -827,7 +760,6 @@ void DigitalIO_next_aaak_once(DigitalIO* unit, int inNumSamples) {
 // output changing at control rate, rest audio
 void DigitalIO_next_aaka_once(DigitalIO* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float* pinid = IN(0);
@@ -847,7 +779,7 @@ void DigitalIO_next_aaka_once(DigitalIO* unit, int inNumSamples) {
         // read input
         newpin = (int)pinid[n];
         if ((newpin < 0) || (newpin >= context->digitalChannels)) {
-            rt_printf("DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
+            rt_fprintf(stderr, "DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
                       context->digitalChannels, newpin);
         } else {
             newmode = iomode[n];
@@ -870,7 +802,6 @@ void DigitalIO_next_aaka_once(DigitalIO* unit, int inNumSamples) {
 // output changing at control rate, and pin mode at control rate
 void DigitalIO_next_aakk_once(DigitalIO* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float* pinid = IN(0);
@@ -890,7 +821,7 @@ void DigitalIO_next_aakk_once(DigitalIO* unit, int inNumSamples) {
         for (unsigned int n = 0; n < inNumSamples; n++) {
             newpin = (int)pinid[n];
             if ((newpin < 0) || (newpin >= context->digitalChannels)) {
-                rt_printf("DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
+                rt_fprintf(stderr, "DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
                           context->digitalChannels, newpin);
             } else {
                 pinModeOnce(context, n, newpin, INPUT);
@@ -903,7 +834,7 @@ void DigitalIO_next_aakk_once(DigitalIO* unit, int inNumSamples) {
         for (unsigned int n = 0; n < inNumSamples; n++) {
             newpin = (int)pinid[n];
             if ((newpin < 0) || (newpin >= context->digitalChannels)) {
-                rt_printf("DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
+                rt_fprintf(stderr, "DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0,
                           context->digitalChannels, newpin);
             } else {
                 pinModeOnce(context, n, newpin, OUTPUT);
@@ -920,7 +851,6 @@ void DigitalIO_next_aakk_once(DigitalIO* unit, int inNumSamples) {
 // pin changing at control rate, output control rate, rest audio rate
 void DigitalIO_next_akaa_once(DigitalIO* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float pinid = IN0(0);
@@ -938,7 +868,7 @@ void DigitalIO_next_akaa_once(DigitalIO* unit, int inNumSamples) {
     int newDigOut = (int)in;
 
     if ((newpin < 0) || (newpin >= context->digitalChannels)) {
-        rt_printf("DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
+        rt_fprintf(stderr, "DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
                   newpin);
     } else {
         for (unsigned int n = 0; n < inNumSamples; n++) {
@@ -962,7 +892,6 @@ void DigitalIO_next_akaa_once(DigitalIO* unit, int inNumSamples) {
 // result audio rate, pin changing at control rate, output value audio rate, pin mode change control rate
 void DigitalIO_next_akak_once(DigitalIO* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float pinid = IN0(0);
@@ -980,7 +909,7 @@ void DigitalIO_next_akak_once(DigitalIO* unit, int inNumSamples) {
     int newDigOut = (int)in;
 
     if ((newpin < 0) || (newpin >= context->digitalChannels)) {
-        rt_printf("DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
+        rt_fprintf(stderr, "DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
                   newpin);
     } else {
         if (iomode < 0.5) {
@@ -1008,7 +937,6 @@ void DigitalIO_next_akak_once(DigitalIO* unit, int inNumSamples) {
 // audio rate ugen output, pin changing at control rate, output at control rate, mode at audio rate
 void DigitalIO_next_akka_once(DigitalIO* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float pinid = IN0(0);
@@ -1025,7 +953,7 @@ void DigitalIO_next_akka_once(DigitalIO* unit, int inNumSamples) {
     int newDigOut = unit->mLastDigitalOut;
 
     if ((newpin < 0) || (newpin >= context->digitalChannels)) {
-        rt_printf("DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
+        rt_fprintf(stderr, "DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
                   newpin);
     }
 
@@ -1054,7 +982,6 @@ void DigitalIO_next_akka_once(DigitalIO* unit, int inNumSamples) {
 // all inputs at control rate, output at audio rate
 void DigitalIO_next_ak(DigitalIO* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     float pinid = IN0(0);
@@ -1069,7 +996,7 @@ void DigitalIO_next_ak(DigitalIO* unit, int inNumSamples) {
     int newDigOut = (int)in;
 
     if ((pinid < 0) || (pinid >= context->digitalChannels)) {
-        rt_printf("DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
+        rt_fprintf(stderr, "DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
                   newpin);
     } else {
         if (iomode < 0.5) {
@@ -1101,7 +1028,6 @@ void DigitalIO_next_ak(DigitalIO* unit, int inNumSamples) {
 // all at control rate, output at control rate
 void DigitalIO_next_kk(DigitalIO* unit, int inNumSamples) {
     World* world = unit->mWorld;
-    int bufLength = world->mBufLength;
     BelaContext* context = world->mBelaContext;
 
     int pinid = (int)IN0(0);
@@ -1113,7 +1039,7 @@ void DigitalIO_next_kk(DigitalIO* unit, int inNumSamples) {
     int newDigOut = unit->mLastDigitalOut;
 
     if ((pinid < 0) || (pinid >= context->digitalChannels)) {
-        rt_printf("DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
+        rt_fprintf(stderr, "DigitalIO warning: digital pin must be between %i and %i, it is %i \n", 0, context->digitalChannels,
                   pinid);
     } else {
         if (iomode < 0.5) {
@@ -1135,70 +1061,13 @@ void DigitalIO_next_kk(DigitalIO* unit, int inNumSamples) {
     unit->mLastDigitalOut = newDigOut;
 }
 
-/*
-void DigitalIO_next(DigitalIO *unit, int inNumSamples)
-{
-  World *world = unit->mWorld;
-  int bufLength = world->mBufLength;
-  BelaContext *context = world->mBelaContext;
-
-  float *pinid = IN(0);
-  float *in = IN(1); // input value
-  float *iomode = IN(2); // IO mode : < 0.5 = input, else output
-  float *out = ZOUT(0); // output value = last output value
-
-  int newpin;
-  float newmode = 0; // input
-  float newinput = 0;
-  int newinputInt = 0;
-  int newoutput = unit->mLastIn;
-
-  // context->audioFrames should be equal to inNumSamples
-//   for(unsigned int n = 0; n < context->digitalFrames; n++) {
-  for(unsigned int n = 0; n < inNumSamples; n++) {
-    // read input
-    newpin = (int) pinid[n];
-    if ( (newpin < 0) || (newpin >= context->digitalChannels) ){
-        rt_printf( "digital pin must be between %i and %i, it is %i", 0, context->digitalChannels, newpin );
-    } else {
-      newinput = in[n];
-      newmode = iomode[n];
-      if ( newmode < 0.5 ){
-  // 	    pinModeOnce( context, n, newpin, INPUT );
-        pinMode( context, n, newpin, INPUT );
-        newoutput = digitalRead(context, n, newpin);
-      } else {
-  // 	    pinModeOnce( context, n, newpin, OUTPUT );
-        pinMode( context, n, newpin, OUTPUT );
-        if ( newinput > 0.5 ){
-          newinputInt = 1;
-        } else {
-          newinputInt = 0;
-        }
-  // 	    digitalWriteOnce(context, n, newpin, newinputInt);
-        digitalWrite(context, n, newpin, newinputInt);
-      }
-    }
-      // always write to the output of the UGen
-    *++out = (float) newoutput;
-  }
-  unit->mLastDigitalIn = newoutput;
-  unit->mLastDigitalOut = newinput;
-}
-*/
-
 void DigitalIO_Ctor(DigitalIO* unit) {
     BelaContext* context = unit->mWorld->mBelaContext;
 
     unit->mLastDigitalIn = 0;
     unit->mLastDigitalOut = 0;
 
-    //         int writeMode = (int) ZIN0(3); // method of writing; 1 = writeOnce; 0 = write on change
-
-    // initiate first sample
-    DigitalIO_next_kk(unit, 1);
     // set calculation method
-    // 	SETCALC(DigitalIO_next);
     if (unit->mCalcRate == calc_FullRate) { // ugen running at audio rate;
         if (INRATE(0) == calc_FullRate) { // pin changed at audio rate
             if (INRATE(1) == calc_FullRate) { // output changed at audio rate
@@ -1267,11 +1136,12 @@ void DigitalIO_Ctor(DigitalIO* unit) {
         }
     } else { // ugen at control rate
         if ((INRATE(0) == calc_FullRate) || (INRATE(1) == calc_FullRate) || (INRATE(2) == calc_FullRate)) {
-            rt_printf("DigitalIO warning: UGen rate is control rate, so cannot change inputs at audio rate\n");
+            rt_fprintf(stderr, "DigitalIO warning: UGen rate is control rate, so cannot change inputs at audio rate\n");
         }
         //             rt_printf("DigitalIO: kk\n");
         SETCALC(DigitalIO_next_kk);
     }
+    BelaUgen_init_output(unit);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1323,10 +1193,9 @@ void BelaScopeUGen_Ctor(BelaScopeUGen* unit) {
     unit->maxScopeChannels = maxScopeChannels;
     unit->frameData = (float*)RTAlloc(unit->mWorld, sizeof(float) * unit->noScopeChannels);
     unit->belaScope = unit->mWorld->mBelaScope;
-    // initiate first sample
-    BelaScopeUGen_next(unit, 1);
     // set calculation method
     SETCALC(BelaScopeUGen_next);
+    BelaUgen_init_output(unit);
 }
 
 void BelaScopeUGen_Dtor(BelaScopeUGen* unit) {
@@ -1336,44 +1205,6 @@ void BelaScopeUGen_Dtor(BelaScopeUGen* unit) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-
-// extern "C"
-// {
-//
-//
-// }
-
-// // the functions below are needed??
-//
-// void render(BelaContext *belaContext, void *userData)
-// {
-// // 	SC_BelaDriver *driver = (SC_BelaDriver*)userData;
-// // 	driver->BelaAudioCallback(belaContext);
-// }
-// // setup() is called once before the audio rendering starts.
-// // Use it to perform any initialisation and allocation which is dependent
-// // on the period size or sample rate.
-// //
-// // userData holds an opaque pointer to a data structure that was passed
-// // in from the call to initAudio().
-// //
-// // Return true on success; returning false halts the program.
-// bool setup(BelaContext* belaContext, void* userData)
-// {
-// 	if(userData == 0){
-// 		printf("BelaPLUGINS: error, setup() got no user data\n");
-// 		return false;
-// 	}
-//
-// 	return true;
-// }
-//
-// // cleanup() is called once at the end, after the audio has stopped.
-// // Release any resources that were allocated in setup().
-// void cleanup(BelaContext *belaContext, void *userData)
-// {
-// }
-
 
 PluginLoad(BELA) {
     ft = inTable;
