@@ -1278,50 +1278,41 @@ void DigitalIO_Ctor(DigitalIO* unit) {
 
 struct BelaScopeUGen : public Unit {
     static unsigned int instanceCount;
-
+    static unsigned int frameDataSize;
+    static float* frameData;
     Scope* belaScope;
-    float* frameData;
-    unsigned int noScopeChannels;
     unsigned int maxScopeChannels;
 };
 
 unsigned int BelaScopeUGen::instanceCount = 0;
+unsigned int BelaScopeUGen::frameDataSize = 0;
+float* BelaScopeUGen::frameData = nullptr;
 
 void BelaScopeUGen_next(BelaScopeUGen* unit, unsigned int numSamples) {
-    unsigned int numChannels = unit->noScopeChannels;
-    unsigned int maxChannels = unit->maxScopeChannels;
-    float* frameData = unit->frameData;
-    float* inputPointers[maxChannels];
-    for (unsigned int ch = 0; ch < numChannels; ++ch)
-        inputPointers[ch] = ZIN(ch);
-
-    LOOP1(numSamples, for (unsigned int ch = 0; ch < numChannels; ++ch) frameData[ch] = ZXP(inputPointers[ch]);
-          for (unsigned int ch = numChannels; ch < maxChannels; ++ch) frameData[ch] = 0.0;
-          unit->belaScope->log(frameData);)
+    float* frameData = BelaScopeUGen::frameData;
+    if(!frameData) return;
+    int minNumSamples = sc_min(numSamples, BelaScopeUGen::frameDataSize / unit->maxScopeChannels);
+    LOOP1(minNumSamples, unit->belaScope->log(frameData); frameData += unit->maxScopeChannels)
+    memset(BelaScopeUGen::frameData, 0, sizeof(float) * BelaScopeUGen::frameDataSize);
 }
 
 void BelaScopeUGen_noop(unsigned int numFrames) { /* no-op */
 }
 
 void BelaScopeUGen_Ctor(BelaScopeUGen* unit) {
-    uint32 numInputs = unit->mNumInputs;
-    uint32 maxScopeChannels = unit->mWorld->mBelaMaxScopeChannels;
-    if (numInputs > maxScopeChannels) {
-        rt_fprintf(stderr,
-                   "BelaScopeUGen warning: can't initialise scope %i channels, maxBelaScopeChannels is set to %i\n",
-                   numInputs, maxScopeChannels);
-    }
     BelaScopeUGen::instanceCount++;
     if (BelaScopeUGen::instanceCount > 1) {
         rt_fprintf(
             stderr,
             "BelaScopeUGen warning: creating a new instance when one is already active. This one will do nothing.\n");
         SETCALC(BelaScopeUGen_noop);
+        unit->mDone = true;
         return;
     };
-    unit->noScopeChannels = sc_min(numInputs, maxScopeChannels);
-    unit->maxScopeChannels = maxScopeChannels;
-    unit->frameData = (float*)RTAlloc(unit->mWorld, sizeof(float) * unit->noScopeChannels);
+    unit->maxScopeChannels = unit->mWorld->mBelaMaxScopeChannels;
+    if(BelaScopeUGen::frameData) RTFree(unit->mWorld, BelaScopeUGen::frameData);
+    BelaScopeUGen::frameDataSize = unit->maxScopeChannels * unit->mWorld->mBufLength;
+    BelaScopeUGen::frameData = (float*)RTAlloc(unit->mWorld, sizeof(float) * BelaScopeUGen::frameDataSize);
     unit->belaScope = unit->mWorld->mBelaScope;
     // initiate first sample
     BelaScopeUGen_next(unit, 1);
@@ -1330,9 +1321,50 @@ void BelaScopeUGen_Ctor(BelaScopeUGen* unit) {
 }
 
 void BelaScopeUGen_Dtor(BelaScopeUGen* unit) {
-    if (unit->frameData)
-        RTFree(unit->mWorld, unit->frameData);
     BelaScopeUGen::instanceCount--;
+    if(BelaScopeUGen::instanceCount == 0 && BelaScopeUGen::frameData) {
+        BelaScopeUGen::frameDataSize = 0;
+        RTFree(unit->mWorld, BelaScopeUGen::frameData);
+        BelaScopeUGen::frameData = nullptr;
+    }
+}
+
+struct BelaScopeOut : public Unit {
+    unsigned int maxScopeChannels;
+    unsigned int noScopeChannels;
+    unsigned int offset;
+};
+
+void BelaScopeOut_next(BelaScopeOut *unit, unsigned int numSamples) {
+    float* frameData = BelaScopeUGen::frameData;
+    unsigned int frameDataSize = BelaScopeUGen::frameDataSize;
+    if(!frameData) return;
+
+    unsigned int numChannels = unit->noScopeChannels;
+    unsigned int maxChannels = unit->maxScopeChannels;
+    float* inputPointers[numChannels];
+    for (unsigned int ch = 0; ch < numChannels; ++ch)
+        inputPointers[ch] = ZIN(ch + 1);
+
+    for(unsigned int frame = unit->offset; frame < frameDataSize; frame+=maxChannels)
+        for (unsigned int ch = 0; ch < numChannels; ++ch) frameData[frame+ch] += ZXP(inputPointers[ch]);
+}
+
+void BelaScopeOut_Ctor(BelaScopeOut *unit) {
+    unit->offset = ZIN0(0);
+    uint32 numInputs = unit->mNumInputs - 1;
+    uint32 maxScopeChannels = unit->mWorld->mBelaMaxScopeChannels;
+    // TODO: check valid offset
+    if (numInputs > maxScopeChannels) {
+        rt_fprintf(stderr,
+                   "BelaScopeOut warning: can't scope %i channels, maxBelaScopeChannels is set to %i\n",
+                   numInputs, maxScopeChannels);
+    }
+    unit->noScopeChannels = sc_min(numInputs, maxScopeChannels);
+    unit->maxScopeChannels = maxScopeChannels;
+
+    BelaScopeOut_next(unit, 1);
+    SETCALC(BelaScopeOut_next);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1384,6 +1416,7 @@ PluginLoad(BELA) {
     DefineSimpleUnit(DigitalIn);
     DefineSimpleUnit(DigitalOut);
     DefineSimpleUnit(DigitalIO);
+    DefineSimpleUnit(BelaScopeOut);
     DefineDtorUnit(BelaScopeUGen);
 }
 

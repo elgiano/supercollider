@@ -16,9 +16,19 @@ list::
 ## an instance of Server running on a Bela (either locally or remotely). 
 
 ## ServerOptions.belaMaxScopeChannels should be set > 0 for Bela's server. 
-It represents the maximum number of channels that is possible to scope on that server, and causes bus and resources allocation. 
+It represents the maximum number of channels that is possible to scope on that server, and affects resources allocation. 
 If set <= 0, the server won't instantiate any Scope object, and any attempt to instantiate a BelaScope from sclang will throw an error.
 ::
+
+note:: 
+When controlling a remote Bela server, it is necessary to manually set its code::belaMaxScopeChannels:: to the corresponding value set on the Bela when the server was booted:
+code::
+// Example:
+~belaServer = Server.remote(\bela, NetAddr("192.168.6.2", 57110), ServerOptions().belaMaxScopeChannels_(4));
+::
+::
+
+If, when a client attempts to create a new BelaScope, there is one already initialized on the server, the client will notice and try to connect to the already initialized one.
 
 subsection:: Usage
 Once a Bela server is started with options.belaMaxScopeChannels > 0, it is possible to scope UGens and Busses using their .belaScope() methods. See examples below.
@@ -96,7 +106,6 @@ Examples::
 code::
 ~belaServer = Server.remote(\bela, NetAddr("192.168.6.2", 57110));
 ~belaServer.options.maxBelaScopeChannels = 8;
-~belaServer.reboot;
 
 // UGens: usage like .poll
 // scope the LFNoise0, and still use it to modulate a SinOsc

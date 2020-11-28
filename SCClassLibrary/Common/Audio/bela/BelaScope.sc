@@ -22,7 +22,7 @@ BelaScope {
 		var ugens = this.class.prInputAsAudioRateUGens(signals);
 
 		if(ugens.notNil and: this.prIsValidScopeChannel(channelOffset, signals)) {
-			Out.ar(this.bus.index + channelOffset, ugens);
+			BelaScopeOut.ar(channelOffset, ugens);
 		};
 
 		^signals;
@@ -34,7 +34,7 @@ BelaScope {
 		server = target.server;
 		belaScope = this.getInstance(server);
 		if(belaScope.prIsValidScopeChannel(channelOffset, busindex+(0..numChannels))) {
-			^Monitor().play(busindex, numChannels, belaScope.bus.index + channelOffset, numChannels, target, addAction:\addAfter);
+			^Synth.after(target, "belaScope_link_audio_" ++ numChannels, [offset:channelOffset, in: busindex])
 		}
 	}
 
@@ -44,6 +44,7 @@ BelaScope {
 
 	*initClass {
 		serverScopes = IdentityDictionary[];
+		StartUp.add { this.prAddSynthDefs }
 	}
 
 	*new { |server|
@@ -65,20 +66,25 @@ BelaScope {
 				.format(server, this.maxChannels)
 			).throw;
 		};
-		ServerBoot.add(this, this.server);
 		ServerTree.add(this, this.server);
 		if(this.server.serverRunning){
-				this.doOnServerBoot;
 				this.doOnServerTree;
 		}
 	}
 
-	// bus and synth creation
+	doOnServerTree { this.prStartScope; ServerTree.remove(this, this.server) }
 
-	prReserveScopeBus {
-		// TODO: check if bus is already reserved, or if maxChannels mismatch
-		bus = Bus.audio(server, this.maxChannels);
+	*prAddSynthDefs {
+		(1..16).do {|i|
+			SynthDef("belaScope_link_audio_" ++ i, {
+				arg offset=0, in=16;
+					BelaScopeOut.ar(offset, InFeedback.ar(in, i))
+			}).add;
+		};
+		SynthDef(\bela_oscilloscope, { BelaScopeUGen.ar }).add
 	}
+
+	// synth creation
 
 	prStartScope {
 		if(node.notNil) {
@@ -100,15 +106,61 @@ BelaScope {
 	}
 
 	prStartSynth {
-		node = SynthDef(\bela_stethoscope) {
-			BelaScopeUGen.ar(this.bus, this.maxChannels);
-		}
-		.play(this.server, addAction: \addAfter)
-		.register;
+		// check for existing synths first, only create new if there are none
+		// TODO: handle timeout error
+		this.prFindExistingScopeSynths { |synths|
+			if (synths.asArray.isEmpty) {
+				this.prCreateNewSynth
+			} {
+				// if found: query them and set this.bus to their bus
+				this.prConnectToExistingSynth(synths.first);
+			}
+		};
 	}
 
-	doOnServerBoot { this.prReserveScopeBus; ServerBoot.remove(this) }
-	doOnServerTree { this.prStartScope; ServerTree.remove(this) }
+	prCreateNewSynth {
+		node = Synth.after(this.server, \bela_oscilloscope)
+		.register
+		.onFree { |synth|
+			if(node == synth) {
+				node = nil;
+				if(this.server.serverRunning) {
+					this.prStartScope
+				}
+			}
+		};
+	}
+
+	// TO TEST:
+	// - start BelaScope on server, then again on client
+	// - start BelaScope on client, restart client
+	// - start BelaScope on client, restart server
+
+	// call action with a list of already-active \bela_oscilloscope Synths, sorted by nodeID
+	// or nil if server doesn't reply before timeout
+	prFindExistingScopeSynths { |action, defName=\bela_oscilloscope, timeout=3|
+		var done = false;
+		var resp = OSCFunc({ arg msg;
+			var idx = msg.selectIndices(_==defName).collect(_-2);
+			var synths = msg[idx].sort.collect{ |id| Synth.basicNew(defName, this.server, id) };
+			done = true;
+			action !? {action.(synths)};
+		}, '/g_queryTree.reply', this.server.addr).oneShot;
+
+		this.server.sendMsg("/g_queryTree", RootNode(this.server).nodeID);
+
+		SystemClock.sched(timeout, {
+			if(done.not, {
+				resp.free;
+				action !? {action.(nil)};
+				"BelaScope: Server failed to respond to Group:queryTree!".warn;
+			})
+		});
+	}
+
+	prConnectToExistingSynth { |synth|
+		node = synth.register(true);
+	}
 
 	// scope input checks
 

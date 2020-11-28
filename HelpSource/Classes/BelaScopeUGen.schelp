@@ -1,5 +1,5 @@
 class:: BelaScopeUGen
-summary:: Bela's Oscilloscope interface
+summary:: Bela's Oscilloscope background worker
 categories::  UGens>BELA
 
 Description::
@@ -8,10 +8,10 @@ This UGen only works on Bela
 ::
 This UGen is used internally to plot signals to Bela's Oscilloscope. Direct usage of this UGen should never be needed. See link::Classes/BelaScope::
 
+BelaScopeUGen allocates the internal buffer where link::Classes/BelaScopeOut:: UGens can write data to be scoped. Only one instance of BelaScopeUGen is allowed to be operational at the same time,
+ exceeding instances will be inactive, and won't become active even if they later become the only instance present.
+If, at creation time, a BelaScopeUGen detects other already present instances, it will set its Done flag and consequently free its enclosing synth.
 classmethods::
 
 method::ar
-argument::busnum
-index of the bus from which to read data to be scoped
-argument::numChannels
-number of channels to read and 
+This method takes no arguments. Once a BelaScopeUGen is active on the server, it will log data from all channels of its internal buffer to Bela's Scope once for every audio processing block.
