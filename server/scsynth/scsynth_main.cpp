@@ -36,6 +36,10 @@
 #else
 #    include <sys/wait.h>
 #endif
+#ifdef __COBALT__
+#    include "XenomaiLock.h"
+XenomaiInitializer xenomaiInitializer;
+#endif // __COBALT__
 
 #ifdef _WIN32
 
