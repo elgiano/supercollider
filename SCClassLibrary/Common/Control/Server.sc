@@ -122,6 +122,7 @@ ServerOptions {
 				adcLevel: 0,
 				numMultiplexChannels: 0,
 				belaPRU: 1,
+				belaMaxScopeChannels: 0,
 			)
 		)
 	}
@@ -248,40 +249,8 @@ ServerOptions {
 		if (maxLogins.notNil, {
 			o = o ++ " -l " ++ maxLogins;
 		});
-
-		// additions for BELA
-		if (numAnalogInChannels.notNil, {
-			o = o ++ " -J " ++ numAnalogInChannels;
-		});
-		if (numAnalogOutChannels.notNil, {
-			o = o ++ " -K " ++ numAnalogOutChannels;
-		});
-		if (numDigitalChannels.notNil, {
-			o = o ++ " -G " ++ numDigitalChannels;
-		});
-		if (headphoneLevel.notNil, {
-			o = o ++ " -Q " ++ headphoneLevel;
-		});
-		if (pgaGainLeft.notNil, {
-			o = o ++ " -X " ++ pgaGainLeft;
-		});
-		if (pgaGainRight.notNil, {
-			o = o ++ " -Y " ++ pgaGainRight;
-		});
-		if (speakerMuted.notNil, {
-			o = o ++ " -s " ++ speakerMuted;
-		});
-		if (dacLevel.notNil, {
-			o = o ++ " -x " ++ dacLevel;
-		});
-		if (adcLevel.notNil, {
-			o = o ++ " -y " ++ adcLevel;
-		});
-		if (numMultiplexChannels.notNil, {
-			o = o ++ " -g " ++ numMultiplexChannels;
-		});
-		if (belaPRU.notNil, {
-			o = o ++ " -T " ++ belaPRU;
+		if (Platform.hasBelaSupport, {
+			o = o ++ BelaServerOptions.asOptionsString(this)
 		});
 		^o
 	}
