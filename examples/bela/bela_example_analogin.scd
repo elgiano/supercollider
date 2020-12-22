@@ -8,8 +8,6 @@ s.options.blockSize = 16;
 s.options.numInputBusChannels = 2;
 s.options.numOutputBusChannels = 2;
 
-s.options.postln;
-
 s.waitForBoot({
   // modulate frequency of a sine oscillator
   (
