@@ -30,13 +30,7 @@
 #include "SC_BelaScope.h"
 #include <math.h>
 #include <stdlib.h>
-
-#ifdef XENOMAI_SKIN_native
-#    include <posix/time.h> // needed for CLOCK_HOST_REALTIME
-#endif
-#ifdef XENOMAI_SKIN_posix
-#    include <cobalt/time.h> // needed for CLOCK_HOST_REALTIME
-#endif
+#include <cobalt/time.h> // needed for CLOCK_HOST_REALTIME
 
 extern "C" {
 // This will be wrapped by Xenomai without requiring linker flags
@@ -164,7 +158,7 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext* belaContext) {
 
     // NOTE: code here is adapted from the SC_Jack.cpp, the version not using the DLL
 
-    // Use Xenomai-friendly clock_gettime() -- note that this requires a -wrap argument to build
+    // Use Xenomai-friendly clock_gettime()
     __wrap_clock_gettime(CLOCK_HOST_REALTIME, &tspec);
 
     double hostSecs = (double)tspec.tv_sec + (double)tspec.tv_nsec * 1.0e-9;
@@ -502,9 +496,6 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate) {
 
 bool SC_BelaDriver::DriverStart() {
     SetPrintFunc((PrintFunc)rt_vprintf); // Use Xenomai's realtime-friendly printing function
-#ifdef XENOMAI_SKIN_native
-    rt_print_auto_init(1); // Make sure the buffers for rt_vprintf are actually initialized.
-#endif
     if (Bela_startAudio()) {
         scprintf("Error in SC_BelaDriver::DriverStart(): unable to start real-time audio\n");
         return false;
