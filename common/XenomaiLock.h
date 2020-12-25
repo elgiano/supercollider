@@ -1,3 +1,4 @@
+#pragma once
 #include <mutex> //unique_lock
 // Xenomai enforces the requirement to hold the lock so that optimizing
 // the wake up process is possible - under the assumption that the caller
