@@ -409,7 +409,7 @@ World* World_New(WorldOptions* inOptions) {
         } else {
             world->hw->mPassword[0] = 0;
         }
-#ifdef BELA
+#ifdef SC_BELA
         world->mBelaAnalogInputChannels = inOptions->mBelaAnalogInputChannels;
         world->mBelaAnalogOutputChannels = inOptions->mBelaAnalogOutputChannels;
         world->mBelaDigitalChannels = inOptions->mBelaDigitalChannels;
@@ -422,7 +422,7 @@ World* World_New(WorldOptions* inOptions) {
         world->mBelaNumMuxChannels = inOptions->mBelaNumMuxChannels;
         world->mBelaPRU = inOptions->mBelaPRU;
         world->mBelaMaxScopeChannels = inOptions->mBelaMaxScopeChannels;
-#endif // BELA
+#endif // SC_BELA
 
 #ifdef __APPLE__
         world->hw->mInputStreamsEnabled = inOptions->mInputStreamsEnabled;

@@ -21,10 +21,10 @@
 
 #pragma once
 
-#ifdef BELA
+#ifdef SC_BELA
 #    include "Bela.h"
 #    include "SC_BelaScope.h"
-#endif
+#endif // SC_BELA
 
 #include "SC_Types.h"
 #include "SC_Rate.h"
@@ -109,7 +109,7 @@ struct World {
     nova::spin_lock* mControlBusLock;
 #endif
 
-#ifdef BELA
+#ifdef SC_BELA
     BelaContext* mBelaContext;
     BelaScope* mBelaScope;
     uint32 mBelaMaxScopeChannels;
@@ -124,7 +124,7 @@ struct World {
     float mBelaADCLevel;
     uint32 mBelaNumMuxChannels;
     uint32 mBelaPRU;
-#endif
+#endif // SC_BELA
 };
 
 inline SndBuf* World_GetBuf(struct World* inWorld, uint32 index) {

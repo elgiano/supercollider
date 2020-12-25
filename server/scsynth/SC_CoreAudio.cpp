@@ -359,9 +359,9 @@ void SC_AudioDriver::RunThread() {
     while (mRunThreadFlag) {
         // wait for sync
         mAudioSync.WaitNext();
-#ifdef BELA
+#ifdef SC_BELA
         rt_print_flush_buffers();
-#endif // BELA
+#endif // SC_BELA
 
         reinterpret_cast<SC_Lock*>(mWorld->mNRTLock)->lock();
 

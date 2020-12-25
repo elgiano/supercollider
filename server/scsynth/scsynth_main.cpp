@@ -91,7 +91,7 @@ void Usage() {
              "   -I <input-streams-enabled>\n"
              "   -O <output-streams-enabled>\n"
 #endif
-#ifdef BELA
+#ifdef SC_BELA
              "   -J <bela-analog-input-channels>\n"
              "   -K <bela-analog-output-channels>\n"
              "   -G <bela-digital-channels>\n"
@@ -104,7 +104,7 @@ void Usage() {
              "   -g <bela-multiplexer-channels>\n"
              "   -T <bela-pru-id>\n"
              "   -E <bela-oscilloscope-max-channels>\n"
-#endif // BELA
+#endif // SC_BELA
 #if (_POSIX_MEMLOCK - 0) >= 200112L
              "   -L enable memory locking\n"
 #endif
@@ -165,7 +165,7 @@ int scsynth_main(int argc, char** argv) {
 
     WorldOptions options;
 
-#ifdef BELA
+#ifdef SC_BELA
     // defaults
     options.mBelaAnalogInputChannels = 0;
     options.mBelaAnalogOutputChannels = 0;
@@ -179,14 +179,14 @@ int scsynth_main(int argc, char** argv) {
     options.mBelaNumMuxChannels = 0;
     options.mBelaPRU = 1;
     options.mBelaMaxScopeChannels = 0;
-#endif // BELA
+#endif // SC_BELA
 
     for (int i = 1; i < argc;) {
-#if defined(BELA)
+#if defined(SC_BELA)
 #    define SC_EXTRA_OPTIONS "JKGQXYAxygTE"
-#else // BELA
+#else // SC_BELA
 #    define SC_EXTRA_OPTIONS ""
-#endif // BELA
+#endif // SC_BELA
         if (argv[i][0] != '-' || argv[i][1] == 0
             || strchr("utBaioczblndpmwZrCNSDIOsMHvVRUhPL" SC_EXTRA_OPTIONS, argv[i][1]) == nullptr) {
             scprintf("ERROR: Invalid option %s\n", argv[i]);
@@ -319,7 +319,7 @@ int scsynth_main(int argc, char** argv) {
             options.mMemoryLocking = false;
 #endif
             break;
-#ifdef BELA
+#ifdef SC_BELA
         case 'J':
             checkNumArgs(2);
             options.mBelaAnalogInputChannels = atoi(argv[j + 1]);
@@ -368,7 +368,7 @@ int scsynth_main(int argc, char** argv) {
             checkNumArgs(2);
             options.mBelaMaxScopeChannels = atoi(argv[j + 1]);
             break;
-#endif // BELA
+#endif // SC_BELA
         case 'V':
             checkNumArgs(2);
             options.mVerbosity = atoi(argv[j + 1]);

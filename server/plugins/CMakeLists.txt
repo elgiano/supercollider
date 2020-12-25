@@ -94,7 +94,7 @@ if (BELA_FOUND)
         BelaUGens.cpp
     )
     set(belaugens BelaUGens)
-    add_definitions("-DBELA" ${XENOMAI_DEFINITIONS} ${BELA_DEFINITIONS})
+    add_definitions("-DSC_BELA" ${XENOMAI_DEFINITIONS} ${BELA_DEFINITIONS})
     include_directories(${XENOMAI_INCLUDE_DIRS})
     include_directories(${BELA_INCLUDE_DIRS})
 
