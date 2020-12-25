@@ -153,7 +153,6 @@ void SC_BelaDriver::BelaAudioCallback(BelaContext* belaContext) {
     sc_SetDenormalFlags();
     World* world = mWorld;
     // add a pointer to belaWorld
-    // 	mWorld->mBelaContext = belaContext;
     world->mBelaContext = belaContext;
 
     // NOTE: code here is adapted from the SC_Jack.cpp, the version not using the DLL
@@ -346,8 +345,8 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate) {
                  settings->periodSize, mSCBufLength);
         settings->periodSize = mSCBufLength;
     }
-    // note that Bela doesn't give us an option to choose samplerate, since it's baked-in.
-    // This can be retrieved in sc_belaSetup()
+    // note that Bela doesn't give us an option to choose samplerate, since
+    // it's baked-in for a given board, however this can be retrieved in sc_belaSetup()
 
     // configure the number of analog channels - this will determine their internal samplerate
     settings->useAnalog = 0;
@@ -475,9 +474,8 @@ bool SC_BelaDriver::DriverSetup(int* outNumSamples, double* outSampleRate) {
     }
 
     settings->verbose = mWorld->mVerbosity;
-    // Initialise the PRU audio device. This function prepares audio rendering in Bela. It should be called from main()
-    // sometime after command line option parsing has finished. It will initialise the rendering system, which in the
-    // process will result in a call to the user-defined setup() function.
+    // This call will initialise the rendering system, which in the process
+    // will result in a call to the user-defined setup() function.
     if (Bela_initAudio(settings, this) != 0) {
         scprintf("Error in SC_BelaDriver::DriverSetup(): unable to initialise audio\n");
         return false;

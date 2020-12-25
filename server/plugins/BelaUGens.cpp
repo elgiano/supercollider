@@ -167,13 +167,6 @@ void MultiplexAnalogIn_next_aaa(MultiplexAnalogIn* unit, int inNumSamples) {
         } else {
             analogValue = multiplexerAnalogRead(
                 context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
-            //         if(analogPin == 0)
-            //         {
-            //             static int count = 0;
-            //             count++;
-            //             if(count % 20000 == 0)
-            //                 rt_printf("MultiPlexed AnalogValue = %.3f\n", analogValue);
-            //         }
         }
         *++out = analogValue;
     }
@@ -190,7 +183,6 @@ void MultiplexAnalogIn_next_aak(MultiplexAnalogIn* unit, int inNumSamples) {
     float analogValue = 0;
 
     // context->audioFrames should be equal to inNumSamples
-    //   for(unsigned int n = 0; n < context->audioFrames; n++) {
     for (unsigned int n = 0; n < inNumSamples; n++) {
         analogPin = (int)fin[n];
         if ((analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0)
@@ -202,13 +194,6 @@ void MultiplexAnalogIn_next_aak(MultiplexAnalogIn* unit, int inNumSamples) {
         } else {
             analogValue = multiplexerAnalogRead(
                 context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
-            //         if(analogPin == 0)
-            //         {
-            //             static int count = 0;
-            //             count++;
-            //             if(count % 20000 == 0)
-            //                 rt_printf("MultiPlexed AnalogValue = %.3f\n", analogValue);
-            //         }
         }
         *++out = analogValue;
     }
@@ -225,7 +210,6 @@ void MultiplexAnalogIn_next_aka(MultiplexAnalogIn* unit, int inNumSamples) {
     float analogValue = 0;
 
     // context->audioFrames should be equal to inNumSamples
-    //   for(unsigned int n = 0; n < context->audioFrames; n++) {
     for (unsigned int n = 0; n < inNumSamples; n++) {
         muxChannel = (int)fmux[n];
         if ((analogPin < 0) || (analogPin >= context->analogInChannels) || (muxChannel < 0)
@@ -237,13 +221,6 @@ void MultiplexAnalogIn_next_aka(MultiplexAnalogIn* unit, int inNumSamples) {
         } else {
             analogValue = multiplexerAnalogRead(
                 context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
-            //         if(analogPin == 0)
-            //         {
-            //             static int count = 0;
-            //             count++;
-            //             if(count % 20000 == 0)
-            //                 rt_printf("MultiPlexed AnalogValue = %.3f\n", analogValue);
-            //         }
         }
         *++out = analogValue;
     }
@@ -271,13 +248,6 @@ void MultiplexAnalogIn_next_akk(MultiplexAnalogIn* unit, int inNumSamples) {
         for (unsigned int n = 0; n < inNumSamples; n++) {
             analogValue = multiplexerAnalogRead(
                 context, analogPin, muxChannel); // is there something like NI? analogReadNI(context, 0, analogPin);
-            //             if(analogPin == 0)
-            //             {
-            //                 static int count = 0;
-            //                 count++;
-            //                 if(count % 20000 == 0)
-            //                     rt_printf("MultiPlexed AnalogValue = %.3f\n", analogValue);
-            //             }
             *++out = analogValue;
         }
     }
@@ -319,14 +289,12 @@ void MultiplexAnalogIn_Ctor(MultiplexAnalogIn* unit) {
             if (INRATE(1) == calc_FullRate) {
                 SETCALC(MultiplexAnalogIn_next_aaa);
             } else {
-                //                 rt_printf("AnalogIn: aa\n");
                 SETCALC(MultiplexAnalogIn_next_aak);
             }
         } else {
             if (INRATE(1) == calc_FullRate) {
                 SETCALC(MultiplexAnalogIn_next_aka);
             } else {
-                //                 rt_printf("AnalogIn: ak\n");
                 SETCALC(MultiplexAnalogIn_next_akk);
             }
         }
@@ -336,7 +304,6 @@ void MultiplexAnalogIn_Ctor(MultiplexAnalogIn* unit) {
                        "MultiplexAnalogIn warning: output rate is control rate, so cannot change analog pin or "
                        "multiplex channel at audio rate\n");
         }
-        //             rt_printf("AnalogIn: kk\n");
         SETCALC(MultiplexAnalogIn_next_kkk);
     }
     BelaUgen_init_output(unit);
@@ -426,10 +393,8 @@ void AnalogIn_Ctor(AnalogIn* unit) {
     // set calculation method
     if (unit->mCalcRate == calc_FullRate) {
         if (INRATE(0) == calc_FullRate) {
-            //                 rt_printf("AnalogIn: aa\n");
             SETCALC(AnalogIn_next_aa);
         } else {
-            //                 rt_printf("AnalogIn: ak\n");
             SETCALC(AnalogIn_next_ak);
         }
     } else {
@@ -437,7 +402,6 @@ void AnalogIn_Ctor(AnalogIn* unit) {
             rt_fprintf(stderr,
                        "AnalogIn warning: output rate is control rate, so cannot change analog pin at audio rate\n");
         }
-        //             rt_printf("AnalogIn: kk\n");
         SETCALC(AnalogIn_next_kk);
     }
     BelaUgen_init_output(unit);
@@ -530,20 +494,16 @@ void AnalogOut_Ctor(AnalogOut* unit) {
         if (INRATE(0) == calc_FullRate) { // pin changed at audio rate
             if (INRATE(1) == calc_FullRate) { // output changed at audio rate
                 SETCALC(AnalogOut_next_aaa);
-                //                     rt_printf("AnalogOut: aaa\n");
             } else {
                 SETCALC(AnalogOut_next_aak);
-                //                     rt_printf("AnalogOut: aak\n");
             }
         } else { // pin changed at control rate
             if (INRATE(1) == calc_FullRate) { // output changed at audio rate
                 SETCALC(AnalogOut_next_aka);
-                //                     rt_printf("AnalogOut: aka\n");
             } else { // analog output only changes at control rate anyways
                 rt_fprintf(
                     stderr,
                     "AnalogOut warning: inputs are control rate, so AnalogOut is also running at control rate\n");
-                //                     rt_printf("AnalogOut: kk\n");
                 SETCALC(AnalogOut_next_kk);
             }
         }
@@ -552,7 +512,6 @@ void AnalogOut_Ctor(AnalogOut* unit) {
             rt_fprintf(stderr,
                        "AnalogOut warning: output rate is control rate, so cannot change inputs at audio rate\n");
         }
-        //             rt_printf("AnalogOut: kk\n");
         SETCALC(AnalogOut_next_kk);
     }
     BelaUgen_init_output(unit);
@@ -598,10 +557,8 @@ void DigitalIn_Ctor(DigitalIn* unit) {
     // set calculation method
     if (unit->mCalcRate == calc_FullRate) { // ugen running at audio rate;
         SETCALC(DigitalIn_next_a);
-        //                 rt_printf("DigitalIn: a\n");
     } else {
         SETCALC(DigitalIn_next_k);
-        //                 rt_printf("DigitalIn: k\n");
     }
     BelaUgen_init_output(unit);
 }
@@ -693,15 +650,12 @@ void DigitalOut_Ctor(DigitalOut* unit) {
     if (unit->mCalcRate == calc_FullRate) { // ugen running at audio rate;
         if (INRATE(1) == calc_FullRate) { // output changed at audio rate
             if (writeMode) {
-                //                     rt_printf("DigitalOut: a once\n");
                 SETCALC(DigitalOut_next_a_once);
             } else {
-                //                     rt_printf("DigitalOut: a\n");
                 SETCALC(DigitalOut_next_a);
             }
         } else { // not much reason to actually do audiorate output
             rt_fprintf(stderr, "DigitalOut warning: inputs are control rate, so DigitalOut will run at control rate\n");
-            //                 rt_printf("DigitalOut: k\n");
             SETCALC(DigitalOut_next_k);
         }
     } else { // ugen at control rate
@@ -709,7 +663,6 @@ void DigitalOut_Ctor(DigitalOut* unit) {
             rt_fprintf(stderr,
                        "DigitalOut warning: UGen rate is control rate, so cannot change inputs at audio rate\n");
         }
-        //             rt_printf("DigitalOut: k\n");
         SETCALC(DigitalOut_next_k);
     }
     BelaUgen_init_output(unit);
@@ -1130,64 +1083,28 @@ void DigitalIO_Ctor(DigitalIO* unit) {
         if (INRATE(0) == calc_FullRate) { // pin changed at audio rate
             if (INRATE(1) == calc_FullRate) { // output changed at audio rate
                 if (INRATE(2) == calc_FullRate) { // pinmode changed at audio rate
-                    //                         if ( writeMode ){
-                    //                             rt_printf("DigitalIO: aaaa once\n");
                     SETCALC(DigitalIO_next_aaaa_once);
-                    //                         } else {
-                    //                             SETCALC(DigitalIO_next_aaaa);
-                    //                         }
                 } else {
-                    //                         if ( writeMode ){
-                    //                             rt_printf("DigitalIO: aaak once\n");
                     SETCALC(DigitalIO_next_aaak_once);
-                    //                         } else {
-                    //                             SETCALC(DigitalIO_next_aaak);
-                    //                         }
                 }
             } else { // output changed at control rate
                 if (INRATE(2) == calc_FullRate) { // pinmode changed at audio rate
-                    //                         if ( writeMode ){
-                    //                             rt_printf("DigitalIO: aaka once\n");
                     SETCALC(DigitalIO_next_aaka_once);
-                    //                         } else {
-                    //                             SETCALC(DigitalIO_next_aaka);
-                    //                         }
                 } else {
-                    //                         if ( writeMode ){
-                    //                             rt_printf("DigitalIO: aakk once\n");
                     SETCALC(DigitalIO_next_aakk_once);
-                    //                         } else {
-                    //                             SETCALC(DigitalIO_next_aakk);
-                    //                         }
                 }
             }
         } else { // pin changed at control rate
             if (INRATE(1) == calc_FullRate) { // output changed at audio rate
                 if (INRATE(2) == calc_FullRate) { // pinmode changed at audio rate
-                    //                         if ( writeMode ){
-                    //                             rt_printf("DigitalIO: akaa once\n");
                     SETCALC(DigitalIO_next_akaa_once);
-                    //                         } else {
-                    //                             SETCALC(DigitalIO_next_akaa);
-                    //                         }
                 } else {
-                    //                         if ( writeMode ){
-                    //                             rt_printf("DigitalIO: akak once\n");
                     SETCALC(DigitalIO_next_akak_once);
-                    //                         } else {
-                    //                             SETCALC(DigitalIO_next_akak);
-                    //                         }
                 }
             } else { // output changed at control rate
                 if (INRATE(2) == calc_FullRate) { // pinmode changed at audio rate
-                    //                         if ( writeMode ){
-                    //                             rt_printf("DigitalIO: akka once\n");
                     SETCALC(DigitalIO_next_akka_once);
-                    //                         } else {
-                    //                             SETCALC(DigitalIO_next_akka);
-                    //                         }
                 } else { // pinmode at control rate
-                    //                         rt_printf("DigitalIO: ak once\n");
                     SETCALC(DigitalIO_next_ak);
                 }
             }
@@ -1196,7 +1113,6 @@ void DigitalIO_Ctor(DigitalIO* unit) {
         if ((INRATE(0) == calc_FullRate) || (INRATE(1) == calc_FullRate) || (INRATE(2) == calc_FullRate)) {
             rt_fprintf(stderr, "DigitalIO warning: UGen rate is control rate, so cannot change inputs at audio rate\n");
         }
-        //             rt_printf("DigitalIO: kk\n");
         SETCALC(DigitalIO_next_kk);
     }
 #endif // BELA_SIMPLIFIED_DIGITALIO
@@ -1269,9 +1185,3 @@ PluginLoad(BELA) {
     DefineSimpleUnit(DigitalIO);
     DefineSimpleUnit(BelaScopeOut);
 }
-
-
-// C_LINKAGE SC_API_EXPORT void unload(InterfaceTable *inTable)
-// {
-//
-// }
