@@ -1,55 +1,55 @@
-BelaServerOptions {
+BelaServerOptions : ServerOptions {
+
+	var <>numAnalogInChannels;
+	var <>numAnalogOutChannels;
+	var <>numDigitalChannels;
+	var <>headphoneLevel;
+	var <>pgaGainLeft;
+	var <>pgaGainRight;
+	var <>speakerMuted;
+	var <>dacLevel;
+	var <>adcLevel;
+	var <>numMultiplexChannels;
+	var <>belaPRU;
+	var <>belaMaxScopeChannels;
 
 	classvar defaultValues;
 
-	*initDefaults {
-		defaultValues = IdentityDictionary.newFrom(
-			(
-				numAnalogInChannels: 2,
-				numAnalogOutChannels: 2,
-				numDigitalChannels: 16,
-				headphoneLevel: -6,
-				pgaGainLeft: 10,
-				pgaGainRight: 10,
-				speakerMuted: 0,
-				dacLevel: 0,
-				adcLevel: 0,
-				numMultiplexChannels: 0,
-				belaPRU: 1,
-				belaMaxScopeChannels: 0
-			)
-		);
-		^defaultValues;
+	*initClass {
+		defaultValues = super.defaultValues.copy.putAll((
+			numAnalogInChannels: 2,
+			numAnalogOutChannels: 2,
+			numDigitalChannels: 16,
+			headphoneLevel: -6,
+			pgaGainLeft: 10,
+			pgaGainRight: 10,
+			speakerMuted: 0,
+			dacLevel: 0,
+			adcLevel: 0,
+			numMultiplexChannels: 0,
+			belaPRU: 1,
+			belaMaxScopeChannels: 0
+		));
 	}
 
-	*addBelaOptions { |serverOptions|
-		var belaOpts = (defaultValues ?? { this.initDefaults }).copy;
-		belaOpts.keys.do { |optName|
-			serverOptions.addUniqueMethod(optName) { belaOpts[optName] };
-			serverOptions.addUniqueMethod(optName.asSetter) { |self, newValue|
-				belaOpts[optName] = newValue
-			};
-		}
+	init {
+		defaultValues.keysValuesDo { |key, val| this.instVarPut(key, val) };
 	}
 
-	*asOptionsString { |serverOptions|
-		var o = " -J " ++ this.getOpt(serverOptions, \numAnalogInChannels);
-		o = o ++ " -K " ++ this.getOpt(serverOptions, \numAnalogOutChannels);
-		o = o ++ " -G " ++ this.getOpt(serverOptions, \numDigitalChannels);
-		o = o ++ " -Q " ++ this.getOpt(serverOptions, \headphoneLevel);
-		o = o ++ " -X " ++ this.getOpt(serverOptions, \pgaGainLeft);
-		o = o ++ " -Y " ++ this.getOpt(serverOptions, \pgaGainRight);
-		o = o ++ " -A " ++ this.getOpt(serverOptions, \speakerMuted);
-		o = o ++ " -x " ++ this.getOpt(serverOptions, \dacLevel);
-		o = o ++ " -y " ++ this.getOpt(serverOptions, \adcLevel);
-		o = o ++ " -g " ++ this.getOpt(serverOptions, \numMultiplexChannels);
-		o = o ++ " -T " ++ this.getOpt(serverOptions, \belaPRU);
-		o = o ++ " -E " ++ this.getOpt(serverOptions, \belaMaxScopeChannels);
-		^o;
+	asOptionsString { | port = 57110 |
+		var o = super.asOptionsString(port);
+		o = o ++ " -J " ++ numAnalogInChannels;
+		o = o ++ " -K " ++ numAnalogOutChannels;
+		o = o ++ " -G " ++ numDigitalChannels;
+		o = o ++ " -Q " ++ headphoneLevel;
+		o = o ++ " -X " ++ pgaGainLeft;
+		o = o ++ " -Y " ++ pgaGainRight;
+		o = o ++ " -A " ++ speakerMuted;
+		o = o ++ " -x " ++ dacLevel;
+		o = o ++ " -y " ++ adcLevel;
+		o = o ++ " -g " ++ numMultiplexChannels;
+		o = o ++ " -T " ++ belaPRU;
+		o = o ++ " -E " ++ belaMaxScopeChannels;
+		^o
 	}
-
-	*getOpt { |serverOptions, optionName|
-		^(serverOptions.perform(optionName) ? defaultValues[optionName]);
-	}
-
 }

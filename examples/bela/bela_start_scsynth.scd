@@ -1,5 +1,3 @@
-s = Server.default;
-
 s.options.numAnalogInChannels = 8;
 s.options.numAnalogOutChannels = 8;
 s.options.numDigitalChannels = 16;
@@ -15,5 +13,9 @@ s.options.numMultiplexChannels = 0;
 s.options.blockSize = 16;
 s.options.numInputBusChannels = 2;
 s.options.numOutputBusChannels = 2;
+
+// These lines enable access from remote hosts
+s.options.bindAddress = "0.0.0.0"
+s.options.maxLogins = 2
 
 s.boot;

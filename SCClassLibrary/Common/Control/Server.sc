@@ -1,5 +1,5 @@
 ServerOptions {
-	classvar defaultValues;
+	classvar <defaultValues;
 
 	// order of variables is important here. Only add new instance variables to the end.
 	var <numAudioBusChannels;
@@ -111,9 +111,6 @@ ServerOptions {
 
 	init {
 		defaultValues.keysValuesDo { |key, val| this.instVarPut(key, val) };
-		if (Platform.hasBelaSupport, {
-			BelaServerOptions.addBelaOptions(this)
-		});
 	}
 
 	device {
@@ -233,9 +230,6 @@ ServerOptions {
 		if (thisProcess.platform.name === \osx && Server.program.asString.endsWith("supernova").not && safetyClipThreshold.notNil, {
 			o = o ++ " -s " ++ safetyClipThreshold;
 		});
-		if (Platform.hasBelaSupport, {
-			o = o ++ BelaServerOptions.asOptionsString(this)
-		});
 		^o
 	}
 
@@ -342,6 +336,7 @@ Server {
 	classvar <>local, <>internal, <default;
 	classvar <>named, <>all, <>program, <>sync_s = true;
 	classvar <>nodeAllocClass, <>bufferAllocClass, <>busAllocClass;
+	classvar <>defaultOptionsClass;
 
 	var <name, <addr, <clientID;
 	var <isLocal, <inProcess, <>sendQuit, <>remoteControlled;
@@ -371,13 +366,17 @@ Server {
 		bufferAllocClass = ContiguousBlockAllocator;
 		busAllocClass = ContiguousBlockAllocator;
 
+		defaultOptionsClass = case
+			{ Platform.hasBelaSupport } { BelaServerOptions }
+			{ ServerOptions };
+
 		default = local = Server.new(\localhost, NetAddr("127.0.0.1", 57110));
 		internal = Server.new(\internal, NetAddr.new);
 	}
 
 	*fromName { |name|
 		^Server.named[name] ?? {
-			Server(name, NetAddr.new("127.0.0.1", 57110), ServerOptions.new)
+			Server(name, NetAddr.new("127.0.0.1", 57110))
 		}
 	}
 
@@ -400,7 +399,7 @@ Server {
 
 	init { |argName, argAddr, argOptions, argClientID|
 		this.addr = argAddr;
-		options = argOptions ?? { ServerOptions.new };
+		options = argOptions ?? { defaultOptionsClass.new };
 
 		// set name to get readable posts from clientID set
 		name = argName.asSymbol;
