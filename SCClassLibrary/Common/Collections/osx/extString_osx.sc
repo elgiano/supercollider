@@ -22,7 +22,7 @@
 		};
 	}
 
-	openOS {
-		("open " ++ this.escapeChar($ )).systemCmd
+	openOS { |action|
+		["open", this].unixCmd(action)
 	}
 }
