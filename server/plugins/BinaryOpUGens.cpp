@@ -251,6 +251,7 @@ enum {
     opSqrDif, // (a - b)^2
     opAbsDif, // |a - b|
     opThresh,
+    opThresh2,
     opAMClip,
     opScaleNeg,
     opClip2,
@@ -424,6 +425,13 @@ void thresh_ak(BinaryOpUGen* unit, int inNumSamples);
 void thresh_ka(BinaryOpUGen* unit, int inNumSamples);
 void thresh_ai(BinaryOpUGen* unit, int inNumSamples);
 void thresh_ia(BinaryOpUGen* unit, int inNumSamples);
+void thresh2_d(BinaryOpUGen* unit, int inNumSamples);
+void thresh2_1(BinaryOpUGen* unit, int inNumSamples);
+void thresh2_aa(BinaryOpUGen* unit, int inNumSamples);
+void thresh2_ak(BinaryOpUGen* unit, int inNumSamples);
+void thresh2_ka(BinaryOpUGen* unit, int inNumSamples);
+void thresh2_ai(BinaryOpUGen* unit, int inNumSamples);
+void thresh2_ia(BinaryOpUGen* unit, int inNumSamples);
 void clip2_d(BinaryOpUGen* unit, int inNumSamples);
 void clip2_1(BinaryOpUGen* unit, int inNumSamples);
 void clip2_aa(BinaryOpUGen* unit, int inNumSamples);
@@ -906,6 +914,17 @@ void thresh_d(BinaryOpUGen* unit, int inNumSamples) {
     }
 }
 
+void thresh2_d(BinaryOpUGen* unit, int inNumSamples) {
+    if (inNumSamples) {
+        float a = DEMANDINPUT_A(0, inNumSamples);
+        float b = DEMANDINPUT_A(1, inNumSamples);
+        OUT0(0) = sc_isnan(a) || sc_isnan(b) ? NAN : sc_thresh2(a, b);
+    } else {
+        RESETINPUT(0);
+        RESETINPUT(1);
+    }
+}
+
 void clip2_d(BinaryOpUGen* unit, int inNumSamples) {
     if (inNumSamples) {
         float a = DEMANDINPUT_A(0, inNumSamples);
@@ -1290,6 +1309,12 @@ void thresh_1(BinaryOpUGen* unit, int inNumSamples) {
     float xa = ZIN0(0);
     float xb = ZIN0(1);
     ZOUT0(0) = xa < xb ? 0.f : xa;
+}
+
+void thresh2_1(BinaryOpUGen* unit, int inNumSamples) {
+    float xa = ZIN0(0);
+    float xb = ZIN0(1);
+    ZOUT0(0) = sc_abs(xa) < xb ? 0.f : xa;
 }
 
 void clip2_1(BinaryOpUGen* unit, int inNumSamples) {
@@ -3249,6 +3274,62 @@ void thresh_ai(BinaryOpUGen* unit, int inNumSamples) {
     unit->mPrevB = xb;
 }
 
+void thresh2_aa(BinaryOpUGen* unit, int inNumSamples) {
+    float* out = ZOUT(0);
+    float* a = ZIN(0);
+    float* b = ZIN(1);
+
+    LOOP1(inNumSamples, float xa = ZXP(a); float xb = ZXP(b); ZXP(out) = sc_abs(xa) < xb ? 0.f : xa;);
+}
+
+void thresh2_ak(BinaryOpUGen* unit, int inNumSamples) {
+    float* out = ZOUT(0);
+    float* a = ZIN(0);
+    float xb = unit->mPrevB;
+    float next_b = ZIN0(1);
+
+    if (xb == next_b) {
+        LOOP1(inNumSamples, float xa = ZXP(a); ZXP(out) = sc_abs(xa) < xb ? 0.f : xa;);
+    } else {
+        float slope = CALCSLOPE(next_b, xb);
+        LOOP1(inNumSamples, float xa = ZXP(a); ZXP(out) = sc_abs(xa) < xb ? 0.f : xa; xb += slope;);
+        unit->mPrevB = xb;
+    }
+}
+
+void thresh2_ka(BinaryOpUGen* unit, int inNumSamples) {
+    float* out = ZOUT(0);
+    float xa = unit->mPrevA;
+    float* b = ZIN(1);
+    float next_a = ZIN0(0);
+
+    if (xa == next_a) {
+        LOOP1(inNumSamples, float xb = ZXP(b); ZXP(out) = sc_abs(xa) < xb ? 0.f : xa;);
+    } else {
+        float slope = CALCSLOPE(next_a, xa);
+        LOOP1(inNumSamples, float xb = ZXP(b); ZXP(out) = sc_abs(xa) < xb ? 0.f : xa; xa += slope;);
+        unit->mPrevA = xa;
+    }
+}
+
+void thresh2_ia(BinaryOpUGen* unit, int inNumSamples) {
+    float* out = ZOUT(0);
+    float xa = ZIN0(0);
+    float* b = ZIN(1);
+
+    LOOP1(inNumSamples, float xb = ZXP(b); ZXP(out) = sc_abs(xa) < xb ? 0.f : xa;);
+    unit->mPrevA = xa;
+}
+
+
+void thresh2_ai(BinaryOpUGen* unit, int inNumSamples) {
+    float* out = ZOUT(0);
+    float* a = ZIN(0);
+    float xb = ZIN0(1);
+
+    LOOP1(inNumSamples, float xa = ZXP(a); ZXP(out) = sc_abs(xa) < xb ? 0.f : xa;);
+    unit->mPrevB = xb;
+}
 
 void clip2_aa(BinaryOpUGen* unit, int inNumSamples) {
     float* out = ZOUT(0);
@@ -4783,6 +4864,9 @@ static BinaryOpFunc ChooseOneSampleFunc(BinaryOpUGen* unit) {
     case opThresh:
         func = &thresh_1;
         break;
+    case opThresh2:
+        func = &thresh2_1;
+        break;
     case opAMClip:
         func = &amclip_1;
         break;
@@ -4937,6 +5021,9 @@ static BinaryOpFunc ChooseDemandFunc(BinaryOpUGen* unit) {
         break;
     case opThresh:
         func = &thresh_d;
+        break;
+    case opThresh2:
+        func = &thresh2_d;
         break;
     case opAMClip:
         func = &amclip_d;
@@ -5101,6 +5188,9 @@ static BinaryOpFunc ChooseNormalFunc(BinaryOpUGen* unit) {
             case opThresh:
                 func = &thresh_aa;
                 break;
+            case opThresh2:
+                func = &thresh2_aa;
+                break;
             case opAMClip:
                 func = &amclip_aa;
                 break;
@@ -5252,6 +5342,9 @@ static BinaryOpFunc ChooseNormalFunc(BinaryOpUGen* unit) {
                 break;
             case opThresh:
                 func = &thresh_ak;
+                break;
+            case opThresh2:
+                func = &thresh2_ak;
                 break;
             case opAMClip:
                 func = &amclip_ak;
@@ -5405,6 +5498,9 @@ static BinaryOpFunc ChooseNormalFunc(BinaryOpUGen* unit) {
             case opThresh:
                 func = &thresh_ai;
                 break;
+            case opThresh2:
+                func = &thresh2_ai;
+                break;
             case opAMClip:
                 func = &amclip_ai;
                 break;
@@ -5556,6 +5652,9 @@ static BinaryOpFunc ChooseNormalFunc(BinaryOpUGen* unit) {
                 break;
             case opThresh:
                 func = &thresh_ka;
+                break;
+            case opThresh2:
+                func = &thresh2_ka;
                 break;
             case opAMClip:
                 func = &amclip_ka;
@@ -5709,6 +5808,9 @@ static BinaryOpFunc ChooseNormalFunc(BinaryOpUGen* unit) {
                 break;
             case opThresh:
                 func = &thresh_ia;
+                break;
+            case opThresh2:
+                func = &thresh2_ia;
                 break;
             case opAMClip:
                 func = &amclip_ia;
@@ -5877,6 +5979,9 @@ static BinaryOpFunc ChooseNovaSimdFunc_64(BinaryOpUGen* unit) {
             case opThresh:
                 func = &thresh_aa;
                 break;
+            case opThresh2:
+                func = &thresh2_aa;
+                break;
             case opAMClip:
                 func = &amclip_aa;
                 break;
@@ -6027,6 +6132,9 @@ static BinaryOpFunc ChooseNovaSimdFunc_64(BinaryOpUGen* unit) {
             case opThresh:
                 func = &thresh_ak;
                 break;
+            case opThresh2:
+                func = &thresh2_ak;
+                break;
             case opAMClip:
                 func = &amclip_ak;
                 break;
@@ -6176,6 +6284,9 @@ static BinaryOpFunc ChooseNovaSimdFunc_64(BinaryOpUGen* unit) {
                 break;
             case opThresh:
                 func = &thresh_ai;
+                break;
+            case opThresh2:
+                func = &thresh2_ai;
                 break;
             case opAMClip:
                 func = &amclip_ai;
@@ -6329,6 +6440,9 @@ static BinaryOpFunc ChooseNovaSimdFunc_64(BinaryOpUGen* unit) {
             case opThresh:
                 func = &thresh_ka;
                 break;
+            case opThresh2:
+                func = &thresh2_ka;
+                break;
             case opAMClip:
                 func = &amclip_ka;
                 break;
@@ -6481,6 +6595,9 @@ static BinaryOpFunc ChooseNovaSimdFunc_64(BinaryOpUGen* unit) {
                 break;
             case opThresh:
                 func = &thresh_ia;
+                break;
+            case opThresh2:
+                func = &thresh2_ia;
                 break;
             case opAMClip:
                 func = &amclip_ia;
@@ -6652,6 +6769,9 @@ static BinaryOpFunc ChooseNovaSimdFunc(BinaryOpUGen* unit) {
             case opThresh:
                 func = &thresh_aa;
                 break;
+            case opThresh2:
+                func = &thresh2_aa;
+                break;
             case opAMClip:
                 func = &amclip_aa;
                 break;
@@ -6802,6 +6922,9 @@ static BinaryOpFunc ChooseNovaSimdFunc(BinaryOpUGen* unit) {
             case opThresh:
                 func = &thresh_ak;
                 break;
+            case opThresh2:
+                func = &thresh2_ak;
+                break;
             case opAMClip:
                 func = &amclip_ak;
                 break;
@@ -6951,6 +7074,9 @@ static BinaryOpFunc ChooseNovaSimdFunc(BinaryOpUGen* unit) {
                 break;
             case opThresh:
                 func = &thresh_ai;
+                break;
+            case opThresh2:
+                func = &thresh2_ai;
                 break;
             case opAMClip:
                 func = &amclip_ai;
@@ -7104,6 +7230,9 @@ static BinaryOpFunc ChooseNovaSimdFunc(BinaryOpUGen* unit) {
             case opThresh:
                 func = &thresh_ka;
                 break;
+            case opThresh2:
+                func = &thresh2_ka;
+                break;
             case opAMClip:
                 func = &amclip_ka;
                 break;
@@ -7256,6 +7385,9 @@ static BinaryOpFunc ChooseNovaSimdFunc(BinaryOpUGen* unit) {
                 break;
             case opThresh:
                 func = &thresh_ia;
+                break;
+            case opThresh2:
+                func = &thresh2_ia;
                 break;
             case opAMClip:
                 func = &amclip_ia;

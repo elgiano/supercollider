@@ -731,6 +731,9 @@ int doSpecialBinaryArithMsg(VMGlobals* g, int numArgsPushed, bool isPrimitive) {
             case opThresh:
                 SetRaw(a, sc_thresh(slotRawInt(a), slotRawInt(b)));
                 break;
+            case opThresh2:
+                SetRaw(a, sc_thresh2(slotRawInt(a), slotRawInt(b)));
+                break;
             case opAMClip:
                 SetRaw(a, sc_amclip(slotRawInt(a), slotRawInt(b)));
                 break;
@@ -836,6 +839,9 @@ int doSpecialBinaryArithMsg(VMGlobals* g, int numArgsPushed, bool isPrimitive) {
                     break;
                 case opThresh:
                     SetObject(a, signal_thresh_fx(g, slotRawInt(a), slotRawObject(b)));
+                    break;
+                case opThresh2:
+                    SetObject(a, signal_thresh2_fx(g, slotRawInt(a), slotRawObject(b)));
                     break;
                 case opAMClip:
                     SetObject(a, signal_amclip_fx(g, slotRawInt(a), slotRawObject(b)));
@@ -961,6 +967,9 @@ int doSpecialBinaryArithMsg(VMGlobals* g, int numArgsPushed, bool isPrimitive) {
                 break;
             case opThresh:
                 SetRaw(a, sc_thresh(slotRawInt(a), slotRawFloat(b)));
+                break;
+            case opThresh2:
+                SetRaw(a, sc_thresh2(slotRawInt(a), slotRawFloat(b)));
                 break;
             case opAMClip:
                 SetFloat(a, sc_amclip((double)slotRawInt(a), slotRawFloat(b)));
@@ -1129,6 +1138,9 @@ int doSpecialBinaryArithMsg(VMGlobals* g, int numArgsPushed, bool isPrimitive) {
                 case opThresh:
                     SetRaw(a, signal_thresh_xf(g, slotRawObject(a), slotRawInt(b)));
                     break;
+                case opThresh2:
+                    SetRaw(a, signal_thresh2_xf(g, slotRawObject(a), slotRawInt(b)));
+                    break;
                 case opAMClip:
                     SetRaw(a, signal_amclip_xf(g, slotRawObject(a), slotRawInt(b)));
                     break;
@@ -1226,6 +1238,9 @@ int doSpecialBinaryArithMsg(VMGlobals* g, int numArgsPushed, bool isPrimitive) {
                     case opThresh:
                         SetRaw(a, signal_thresh_xx(g, slotRawObject(a), slotRawObject(b)));
                         break;
+                    case opThresh2:
+                        SetRaw(a, signal_thresh2_xx(g, slotRawObject(a), slotRawObject(b)));
+                        break;
                     case opAMClip:
                         SetRaw(a, signal_amclip_xx(g, slotRawObject(a), slotRawObject(b)));
                         break;
@@ -1314,6 +1329,9 @@ int doSpecialBinaryArithMsg(VMGlobals* g, int numArgsPushed, bool isPrimitive) {
                     break;
                 case opThresh:
                     SetRaw(a, signal_thresh_xf(g, slotRawObject(a), slotRawFloat(b)));
+                    break;
+                case opThresh2:
+                    SetRaw(a, signal_thresh2_xf(g, slotRawObject(a), slotRawFloat(b)));
                     break;
                 case opAMClip:
                     SetRaw(a, signal_amclip_xf(g, slotRawObject(a), slotRawFloat(b)));
@@ -1444,6 +1462,9 @@ int doSpecialBinaryArithMsg(VMGlobals* g, int numArgsPushed, bool isPrimitive) {
             case opThresh:
                 SetRaw(a, sc_thresh(slotRawFloat(a), slotRawInt(b)));
                 break;
+            case opThresh2:
+                SetRaw(a, sc_thresh2(slotRawFloat(a), slotRawInt(b)));
+                break;
             case opAMClip:
                 SetRaw(a, sc_amclip(slotRawFloat(a), (double)slotRawInt(b)));
                 break;
@@ -1546,6 +1567,9 @@ int doSpecialBinaryArithMsg(VMGlobals* g, int numArgsPushed, bool isPrimitive) {
                     break;
                 case opThresh:
                     SetObject(a, signal_thresh_fx(g, slotRawFloat(a), slotRawObject(b)));
+                    break;
+                case opThresh2:
+                    SetObject(a, signal_thresh2_fx(g, slotRawFloat(a), slotRawObject(b)));
                     break;
                 case opAMClip:
                     SetObject(a, signal_amclip_fx(g, slotRawFloat(a), slotRawObject(b)));
@@ -1670,6 +1694,9 @@ int doSpecialBinaryArithMsg(VMGlobals* g, int numArgsPushed, bool isPrimitive) {
                 break;
             case opThresh:
                 SetRaw(a, sc_thresh(slotRawFloat(a), slotRawFloat(b)));
+                break;
+            case opThresh2:
+                SetRaw(a, sc_thresh2(slotRawFloat(a), slotRawFloat(b)));
                 break;
             case opAMClip:
                 SetRaw(a, sc_amclip(slotRawFloat(a), slotRawFloat(b)));

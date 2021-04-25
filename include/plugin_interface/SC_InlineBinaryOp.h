@@ -520,6 +520,12 @@ template <typename F> inline F sc_powi(F x, unsigned int n) {
 template <typename T, typename U> inline T sc_thresh(T a, U b) { return a < b ? (T)0 : a; }
 
 /**
+ * Bilateral thresholding:
+ * 0 when abs(a) < b, otherwise a
+ */
+template <typename T, typename U> inline T sc_thresh2(T a, U b) { return sc_abs(a) < b ? (T)0 : a; }
+
+/**
  * Bilateral clipping.
  * clips input wave a to +/- b
  */

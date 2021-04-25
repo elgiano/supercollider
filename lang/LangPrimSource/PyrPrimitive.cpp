@@ -4137,7 +4137,8 @@ void initPrimitives() {
     definePrimitive(base, opSqrSum, "_SqrSum", prSpecialBinaryArithMsg, 3, 0); // (a + b)^2
     definePrimitive(base, opSqrDif, "_SqrDif", prSpecialBinaryArithMsg, 3, 0); // (a - b)^2
     definePrimitive(base, opAbsDif, "_AbsDif", prSpecialBinaryArithMsg, 3, 0); // abs(a - b)
-    definePrimitive(base, opThresh, "_Thresh", prSpecialBinaryArithMsg, 3, 0); // a * max(0,b)
+    definePrimitive(base, opThresh, "_Thresh", prSpecialBinaryArithMsg, 3, 0); // a < b ? 0 : a
+    definePrimitive(base, opThresh2, "_Thresh2", prSpecialBinaryArithMsg, 3, 0); // abs(a) < b ? 0 : a
     definePrimitive(base, opAMClip, "_AMClip", prSpecialBinaryArithMsg, 3, 0); // a * max(0,b)
     definePrimitive(base, opScaleNeg, "_ScaleNeg", prSpecialBinaryArithMsg, 3, 0); // a < 0 ? a*b : a
     definePrimitive(base, opClip2, "_Clip2", prSpecialBinaryArithMsg, 3, 0);

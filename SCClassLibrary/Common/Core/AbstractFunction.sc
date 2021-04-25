@@ -142,6 +142,7 @@ AbstractFunction {
 	sqrdif { arg function, adverb; ^this.composeBinaryOp('sqrdif', function, adverb) }
 	absdif { arg function, adverb; ^this.composeBinaryOp('absdif', function, adverb) }
 	thresh { arg function, adverb; ^this.composeBinaryOp('thresh', function, adverb) }
+	thresh2 { arg function, adverb; ^this.composeBinaryOp('thresh2', function, adverb) }
 	amclip { arg function, adverb; ^this.composeBinaryOp('amclip', function, adverb) }
 	scaleneg { arg function, adverb; ^this.composeBinaryOp('scaleneg', function, adverb) }
 	clip2 { arg function=1, adverb; ^this.composeBinaryOp('clip2', function, adverb) }

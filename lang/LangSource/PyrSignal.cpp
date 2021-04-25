@@ -110,6 +110,10 @@ PyrObject* signal_thresh_xx(VMGlobals* g, PyrObject* ina, PyrObject* inb) {
     BINOP_LOOP2(++a; ++b; *++c = *a < *b ? 0.f : *a;);
 }
 
+PyrObject* signal_thresh2_xx(VMGlobals* g, PyrObject* ina, PyrObject* inb) {
+    BINOP_LOOP2(++a; ++b; *++c = fabs(*a) < *b ? 0.f : *a;);
+}
+
 PyrObject* signal_amclip_xx(VMGlobals* g, PyrObject* ina, PyrObject* inb) {
     BINOP_LOOP2(++a; ++b; *++c = *b <= 0.f ? 0.f : *a * *b;);
 }
@@ -213,8 +217,15 @@ PyrObject* signal_thresh_xf(VMGlobals* g, PyrObject* ina, float inb) {
     PyrObject* outc = newPyrSignal(g, ina->size);
     float* a = (float*)(ina->slots) - 1;
     float* c = (float*)(outc->slots) - 1;
-    float inb2 = inb * inb;
-    UNROLL_CODE(outc->size, c, ++a; *++c = *a < inb2 ? 0.f : *a;)
+    UNROLL_CODE(outc->size, c, ++a; *++c = *a < inb ? 0.f : *a;)
+    return outc;
+}
+
+PyrObject* signal_thresh2_xf(VMGlobals* g, PyrObject* ina, float inb) {
+    PyrObject* outc = newPyrSignal(g, ina->size);
+    float* a = (float*)(ina->slots) - 1;
+    float* c = (float*)(outc->slots) - 1;
+    UNROLL_CODE(outc->size, c, ++a; *++c = fabs(*a) < inb ? 0.f : *a;)
     return outc;
 }
 
@@ -325,6 +336,14 @@ PyrObject* signal_thresh_fx(VMGlobals* g, float ina, PyrObject* inb) {
     float* b = (float*)(inb->slots) - 1;
     float* c = (float*)(outc->slots) - 1;
     UNROLL1_CODE(outc->size, c, ++b; *++c = ina < *b ? 0.f : ina;)
+    return outc;
+}
+
+PyrObject* signal_thresh2_fx(VMGlobals* g, float ina, PyrObject* inb) {
+    PyrObject* outc = newPyrSignal(g, inb->size);
+    float* b = (float*)(inb->slots) - 1;
+    float* c = (float*)(outc->slots) - 1;
+    UNROLL1_CODE(outc->size, c, ++b; *++c = fabs(ina) < *b ? 0.f : ina;)
     return outc;
 }
 

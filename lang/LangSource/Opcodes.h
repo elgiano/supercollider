@@ -194,6 +194,7 @@ enum {
     opSqrDif, // (a - b)^2
     opAbsDif, // |a - b|
     opThresh,
+    opThresh2,
     opAMClip,
     opScaleNeg,
     opClip2,

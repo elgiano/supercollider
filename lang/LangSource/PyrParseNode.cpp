@@ -4467,6 +4467,7 @@ void initSpecialSelectors() {
     sel[opSqrDif] = getsym("sqrdif"); // (a - b)^2
     sel[opAbsDif] = getsym("absdif"); //
     sel[opThresh] = getsym("thresh"); //
+    sel[opThresh2] = getsym("thresh2"); //
     sel[opAMClip] = getsym("amclip"); //
     sel[opScaleNeg] = getsym("scaleneg"); //
     sel[opClip2] = getsym("clip2");

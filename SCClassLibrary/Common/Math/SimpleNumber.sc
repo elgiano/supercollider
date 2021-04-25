@@ -101,6 +101,7 @@ SimpleNumber : Number {
 	sqrdif { |aNumber, adverb| _SqrDif; ^aNumber.performBinaryOpOnSimpleNumber('sqrdif', this, adverb) }
 	absdif { |aNumber, adverb| _AbsDif; ^aNumber.performBinaryOpOnSimpleNumber('absdif', this, adverb) }
 	thresh { |aNumber, adverb| _Thresh; ^aNumber.performBinaryOpOnSimpleNumber('thresh', this, adverb) }
+	thresh2 { |aNumber, adverb| _Thresh; ^aNumber.performBinaryOpOnSimpleNumber('thresh2', this, adverb) }
 	amclip { |aNumber, adverb| _AMClip; ^aNumber.performBinaryOpOnSimpleNumber('amclip', this, adverb) }
 	scaleneg { |aNumber, adverb| _ScaleNeg; ^aNumber.performBinaryOpOnSimpleNumber('scaleneg', this, adverb) }
 	clip2 { |aNumber=1, adverb| _Clip2; ^aNumber.performBinaryOpOnSimpleNumber('clip2', this, adverb) }

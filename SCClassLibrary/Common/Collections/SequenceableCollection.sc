@@ -888,6 +888,7 @@ SequenceableCollection : Collection {
 	sqrdif { arg aNumber, adverb; ^this.performBinaryOp('sqrdif', aNumber, adverb) }
 	absdif { arg aNumber, adverb; ^this.performBinaryOp('absdif', aNumber, adverb) }
 	thresh { arg aNumber, adverb; ^this.performBinaryOp('thresh', aNumber, adverb) }
+	thresh2 { arg aNumber, adverb; ^this.performBinaryOp('thresh2', aNumber, adverb) }
 	amclip { arg aNumber, adverb; ^this.performBinaryOp('amclip', aNumber, adverb) }
 	scaleneg { arg aNumber, adverb; ^this.performBinaryOp('scaleneg', aNumber, adverb) }
 	clip2 { arg aNumber=1, adverb; ^this.performBinaryOp('clip2', aNumber, adverb) }
