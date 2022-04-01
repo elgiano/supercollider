@@ -413,24 +413,29 @@ again:
     return false;
 }
 
+bool identDictAt(PyrObject* dict, PyrSlot* key, PyrSlot* result) {
+
+    bool knows = IsTrue(dict->slots + ivxIdentDict_know);
+    if (knows && IsSym(key)) {
+        if (slotRawSymbol(key) == s_parent) {
+            slotCopy(result, &dict->slots[ivxIdentDict_parent]);
+            return errNone;
+        }
+        if (slotRawSymbol(key) == s_proto) {
+            slotCopy(result, &dict->slots[ivxIdentDict_proto]);
+            return errNone;
+        }
+    }
+
+    return identDict_lookup(dict, key, calcHash(key), result);
+}
+
 int prIdentDict_At(struct VMGlobals* g, int numArgsPushed) {
     PyrSlot* a = g->sp - 1; // dict
     PyrSlot* key = g->sp; // key
     PyrObject* dict = slotRawObject(a);
 
-    bool knows = IsTrue(dict->slots + ivxIdentDict_know);
-    if (knows && IsSym(key)) {
-        if (slotRawSymbol(key) == s_parent) {
-            slotCopy(a, &dict->slots[ivxIdentDict_parent]);
-            return errNone;
-        }
-        if (slotRawSymbol(key) == s_proto) {
-            slotCopy(a, &dict->slots[ivxIdentDict_proto]);
-            return errNone;
-        }
-    }
-
-    identDict_lookup(dict, key, calcHash(key), a);
+    identDictAt(dict, key, a);
     return errNone;
 }
 
@@ -449,7 +454,7 @@ int prSymbol_envirGet(struct VMGlobals* g, int numArgsPushed) {
     if (!ISKINDOF(dict, class_identdict_index, class_identdict_maxsubclassindex))
         return errFailed;
 
-    identDict_lookup(dict, a, calcHash(a), &result);
+    identDictAt(dict, a, &result);
     slotCopy(a, &result);
 
     return errNone;
