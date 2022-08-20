@@ -32,6 +32,7 @@
 #include <climits>
 #include <cmath>
 #include <cstring>
+#include <qnamespace.h>
 
 QC_DECLARE_QWIDGET_FACTORY(QcWaveform);
 
@@ -81,6 +82,7 @@ QcWaveform::QcWaveform(QWidget* parent):
     setFocusPolicy(Qt::StrongFocus);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setAttribute(Qt::WA_OpaquePaintEvent, true);
+    setAttribute(Qt::WA_AcceptTouchEvents, true);
 }
 
 QcWaveform::~QcWaveform() {

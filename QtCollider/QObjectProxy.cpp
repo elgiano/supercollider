@@ -35,6 +35,8 @@
 
 #include <PyrKernel.h>
 #include <VMGlobals.h>
+#include <QMouseEvent>
+#include <QTouchEvent>
 
 #if defined _WIN32
 #    include "SC_Win32Utils.h"
@@ -455,6 +457,26 @@ PyrObject* QObjectProxy::parent(PyrSymbol* className) {
 
 bool QObjectProxy::eventFilter(QObject* watched, QEvent* event) {
     int type = event->type();
+
+    switch (type) {
+    case QEvent::TouchBegin: {
+        auto oldestTouchPoint = static_cast<QTouchEvent*>(event)->touchPoints().constLast();
+        QMouseEvent me(QEvent::MouseButtonPress, oldestTouchPoint.pos(), Qt::LeftButton, Qt::LeftButton,
+                       Qt::NoModifier);
+        return QApplication::sendEvent(watched, &me);
+    }
+    case QEvent::TouchUpdate: {
+        auto oldestTouchPoint = static_cast<QTouchEvent*>(event)->touchPoints().constLast();
+        QMouseEvent me(QEvent::MouseMove, oldestTouchPoint.pos(), Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+        return QApplication::sendEvent(watched, &me);
+    }
+    case QEvent::TouchEnd: {
+        auto oldestTouchPoint = static_cast<QTouchEvent*>(event)->touchPoints().constLast();
+        QMouseEvent me(QEvent::MouseButtonRelease, oldestTouchPoint.pos(), Qt::LeftButton, Qt::LeftButton,
+                       Qt::NoModifier);
+        return QApplication::sendEvent(watched, &me);
+    };
+    }
 
     EventHandlerData* d = _eventHandlers.data();
     int n = _eventHandlers.size();

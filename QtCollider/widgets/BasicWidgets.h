@@ -102,7 +102,7 @@ protected:
 class QcCustomPainted : public QcCanvas {
     Q_OBJECT
 public:
-    QcCustomPainted(): l(this) {}
+    QcCustomPainted(): l(this) { setAttribute(Qt::WA_AcceptTouchEvents); }
 
 protected:
     // reimplement event handlers just so events don't propagate
