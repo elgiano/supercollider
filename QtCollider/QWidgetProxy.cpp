@@ -284,6 +284,11 @@ bool QWidgetProxy::preProcessEvent(QObject* o, QEvent* e, EventHandlerData& eh, 
     case QEvent::Drop:
         return eh.enabled && interpretDragEvent(o, e, args);
 
+    case QEvent::TouchBegin:
+    case QEvent::TouchUpdate:
+    case QEvent::TouchEnd:
+        return eh.enabled && interpretTouchEvent(o, e, args);
+
     default:
         return eh.enabled;
     }
@@ -381,6 +386,43 @@ bool QWidgetProxy::interpretMouseWheelEvent(QObject* o, QEvent* e, QList<QVarian
     args << (int)we->modifiers();
     args << delta.x();
     args << delta.y();
+
+    return true;
+}
+
+bool QWidgetProxy::interpretTouchEvent(QObject* o, QEvent* e, QList<QVariant>& args) {
+    if (o != _mouseEventWidget || !_mouseEventWidget->isEnabled())
+        return false;
+
+    QWidget* w = widget();
+
+    QEvent::Type etype = e->type();
+    QTouchEvent* touch = static_cast<QTouchEvent*>(e);
+    for (QTouchEvent::TouchPoint point: touch->touchPoints()) {
+        int pointId = point.id();
+        QPointF pos = point.pos();
+        qreal x = point.pos().x();
+        qreal y = point.pos().y();
+        int state;
+        switch (point.state()) {
+            case Qt::TouchPointPressed:
+                state = 0;
+                break;
+            case Qt::TouchPointMoved:
+                state = 1;
+                break;
+            case Qt::TouchPointStationary:
+                state = 2;
+                break;
+            case Qt::TouchPointReleased:
+                state = 3;
+                break;
+        }
+        args << pointId;
+        args << x;
+        args << y;
+        args << state;
+    }
 
     return true;
 }

@@ -84,6 +84,7 @@ private:
     bool interpretMouseWheelEvent(QObject*, QEvent*, QList<QVariant>& args);
     bool interpretKeyEvent(QObject*, QEvent*, QList<QVariant>& args);
     bool interpretDragEvent(QObject*, QEvent*, QList<QVariant>& args);
+    bool interpretTouchEvent(QObject*, QEvent*, QList<QVariant>& args);
 
     void bringFrontEvent();
     void setFocusEvent(QtCollider::SetFocusEvent*);

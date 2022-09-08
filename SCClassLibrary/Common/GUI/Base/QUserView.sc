@@ -1,5 +1,7 @@
 UserView : View {
 	var <drawFunc, <drawingEnabled=true, <animate=false;
+	// MULTI-TOUCH
+	var <touchBeginAction, <touchUpdateAction, <touchEndAction, <touchCancelAction;
 
 	*qtClass { ^'QcCustomPainted' }
 
@@ -49,4 +51,54 @@ UserView : View {
 	}
 
 	doDrawFunc { drawFunc.value(this) }
+
+	// MULTI-TOUCH
+
+	touchBeginAction_ { arg aFunction;
+		touchBeginAction = aFunction;
+		this.setEventHandler(QObject.touchBeginAction, \touchBegin, aFunction.notNil);
+	}
+	touchBegin { |...args|
+		var touchPointsInfo = args.clump(4);
+		touchBeginAction.value(this, TouchPoint.fromEventArgs(args))
+	}
+
+	touchUpdateAction_ { arg aFunction;
+		touchUpdateAction = aFunction;
+		this.setEventHandler(QObject.touchUpdateAction, \touchUpdate, aFunction.notNil);
+		// touchBegin needs to be enabled for a widget to receive touchUpdates
+		// enable it automatically if the user sets only touchUpdateAction
+		if (touchBeginAction.isNil && touchUpdateAction.notNil) {
+			this.touchBeginAction_{}
+		}
+	}
+	touchUpdate { |...args|
+		touchUpdateAction.value(this, TouchPoint.fromEventArgs(args))
+	}
+
+	touchEndAction_ { arg aFunction;
+		touchEndAction = aFunction;
+		this.setEventHandler(QObject.touchEndAction, \touchEnd, aFunction.notNil);
+	}
+	touchEnd { |...args|
+		touchEndAction.value(this, TouchPoint.fromEventArgs(args)) 
+	}
+
+
+}
+
+TouchPoint {
+	var <id, <x, <y, <state;
+	classvar states = #[\pressed, \moved, \stationary, \released];
+
+	*new { |id, x, y, stateInt|
+		var state = states[stateInt];
+		^super.newCopyArgs(id, x, y, state)
+	}
+
+	*fromEventArgs { |...args|
+		^args.clump(4).collect(TouchPoint(*_))
+	}
+
+	asPoint { ^Point(x, y) }
 }

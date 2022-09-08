@@ -32,6 +32,10 @@ QObject {
 	<mouseWheelEvent = 31,
 	<keyDownEvent = 6,
 	<keyUpEvent = 7;
+	<touchBeginEvent = 194;
+	<touchUpdateEvent = 195;
+	<touchEndEvent = 196;
+	<touchCancelEvent = 209;
 
 	var qObject, finalizer;
 	var virtualSlots;

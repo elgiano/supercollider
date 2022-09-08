@@ -28,6 +28,7 @@
 #include <QVariant>
 #include <QVector>
 #include <QEvent>
+#include <QTouchEvent>
 
 #include <PyrObject.h>
 #include <PyrSlot.h>
@@ -139,6 +140,7 @@ private:
     void scMethodCallEvent(QtCollider::ScMethodCallEvent*);
     bool setPropertyEvent(QtCollider::SetPropertyEvent*);
     bool destroyEvent(QtCollider::DestroyEvent*);
+    bool synthesizeMouseForTouchEvent(QObject*, QTouchEvent*);
 
     QObject* qObject;
     // NOTE: scObject is protected by the language lock. Should not use it without it!

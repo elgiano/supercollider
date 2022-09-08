@@ -455,29 +455,33 @@ PyrObject* QObjectProxy::parent(PyrSymbol* className) {
     return 0;
 }
 
-bool QObjectProxy::eventFilter(QObject* watched, QEvent* event) {
-    int type = event->type();
-
-    switch (type) {
+// Qt synthesizes mouse events for touch events emulating a single pointer, thus not allowing touching multiple widgets at the same time
+// this function sends mouse events for the first touch event for every widget
+// so multiple widgets can be touched at the same time, but only with a single touch for each
+bool QObjectProxy::synthesizeMouseForTouchEvent(QObject* watched, QTouchEvent* touchEvent) {
+    const QTouchEvent::TouchPoint oldestTouchPoint = touchEvent->touchPoints().constLast();
+    auto pos = oldestTouchPoint.pos();
+    switch (touchEvent->type()) {
     case QEvent::TouchBegin: {
-        auto oldestTouchPoint = static_cast<QTouchEvent*>(event)->touchPoints().constLast();
-        QMouseEvent me(QEvent::MouseButtonPress, oldestTouchPoint.pos(), Qt::LeftButton, Qt::LeftButton,
-                       Qt::NoModifier);
+        QMouseEvent me(QEvent::MouseButtonPress, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
         return QApplication::sendEvent(watched, &me);
     }
     case QEvent::TouchUpdate: {
-        auto oldestTouchPoint = static_cast<QTouchEvent*>(event)->touchPoints().constLast();
-        QMouseEvent me(QEvent::MouseMove, oldestTouchPoint.pos(), Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
+        QMouseEvent me(QEvent::MouseMove, pos, Qt::NoButton, Qt::LeftButton, Qt::NoModifier);
         return QApplication::sendEvent(watched, &me);
     }
     case QEvent::TouchEnd: {
-        auto oldestTouchPoint = static_cast<QTouchEvent*>(event)->touchPoints().constLast();
-        QMouseEvent me(QEvent::MouseButtonRelease, oldestTouchPoint.pos(), Qt::LeftButton, Qt::LeftButton,
-                       Qt::NoModifier);
+        QMouseEvent me(QEvent::MouseButtonRelease, pos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
         return QApplication::sendEvent(watched, &me);
-    };
     }
+    default:
+        qcProxyDebugMsg(3, QStringLiteral("No handler for event (%1), forwarding to the widget").arg(type));
+        return false;
+    }
+}
 
+bool QObjectProxy::eventFilter(QObject* watched, QEvent* event) {
+    int type = event->type();
     EventHandlerData* d = _eventHandlers.data();
     int n = _eventHandlers.size();
     while (n--) {
@@ -486,6 +490,11 @@ bool QObjectProxy::eventFilter(QObject* watched, QEvent* event) {
         ++d;
     }
     if (n < 0) {
+        // synthesize mouse events if this is a touch event without a handler
+        QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
+        if (touchEvent != nullptr) {
+            return synthesizeMouseForTouchEvent(watched, touchEvent);
+        }
         qcProxyDebugMsg(3, QStringLiteral("No handler for event (%1), forwarding to the widget").arg(type));
         return false;
     }
