@@ -491,8 +491,9 @@ bool QObjectProxy::eventFilter(QObject* watched, QEvent* event) {
     }
     if (n < 0) {
         // synthesize mouse events if this is a touch event without a handler
-        QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
-        if (touchEvent != nullptr) {
+        bool isTouch = type == QEvent::TouchBegin || type == QEvent::TouchUpdate || type == QEvent::TouchEnd;
+        if (isTouch) {
+            QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
             return synthesizeMouseForTouchEvent(watched, touchEvent);
         }
         qcProxyDebugMsg(3, QStringLiteral("No handler for event (%1), forwarding to the widget").arg(type));

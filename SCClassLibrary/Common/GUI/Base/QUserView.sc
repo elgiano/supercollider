@@ -54,18 +54,25 @@ UserView : View {
 
 	// MULTI-TOUCH
 
+	hasAnyTouchAction {
+		^[touchBeginAction, touchUpdateAction, touchEndAction].any(_.notNil)
+	}
 	touchBeginAction_ { arg aFunction;
 		touchBeginAction = aFunction;
-		this.setEventHandler(QObject.touchBeginAction, \touchBegin, aFunction.notNil);
+		this.setEventHandler(QObject.touchBeginEvent, \touchBegin, true);
+		// touchBegin events need to be accepted for other touch events to be received
+		this.setEventHandlerEnabled(QObject.touchBeginEvent, this.hasAnyTouchAction)
 	}
 	touchBegin { |...args|
-		var touchPointsInfo = args.clump(4);
 		touchBeginAction.value(this, TouchPoint.fromEventArgs(args))
+		// touchBegin events need to be accepted for other touch events to be received
+		^[touchUpdateAction, touchEndAction].notNil;
 	}
 
 	touchUpdateAction_ { arg aFunction;
 		touchUpdateAction = aFunction;
-		this.setEventHandler(QObject.touchUpdateAction, \touchUpdate, aFunction.notNil);
+		this.setEventHandler(QObject.touchUpdateEvent, \touchUpdate);
+		this.setEventHandlerEnabled(QObject.touchUpdateEvent, aFunction.notNil);
 		// touchBegin needs to be enabled for a widget to receive touchUpdates
 		// enable it automatically if the user sets only touchUpdateAction
 		if (touchBeginAction.isNil && touchUpdateAction.notNil) {
@@ -73,15 +80,19 @@ UserView : View {
 		}
 	}
 	touchUpdate { |...args|
-		touchUpdateAction.value(this, TouchPoint.fromEventArgs(args))
+		^touchUpdateAction.value(this, TouchPoint.fromEventArgs(args))
 	}
 
 	touchEndAction_ { arg aFunction;
 		touchEndAction = aFunction;
-		this.setEventHandler(QObject.touchEndAction, \touchEnd, aFunction.notNil);
+		this.setEventHandler(QObject.touchEndEvent, \touchEnd);
+		this.setEventHandlerEnabled(QObject.touchEndEvent, aFunction.notNil);
+		if (touchBeginAction.isNil && touchEndAction.notNil) {
+			this.touchBeginAction_{}
+		}
 	}
 	touchEnd { |...args|
-		touchEndAction.value(this, TouchPoint.fromEventArgs(args)) 
+		^touchEndAction.value(this, TouchPoint.fromEventArgs(args));
 	}
 
 
@@ -96,9 +107,13 @@ TouchPoint {
 		^super.newCopyArgs(id, x, y, state)
 	}
 
-	*fromEventArgs { |...args|
-		^args.clump(4).collect(TouchPoint(*_))
+	*fromEventArgs { |eventArgs|
+		^eventArgs.clump(4).collect(TouchPoint(*_))
 	}
 
 	asPoint { ^Point(x, y) }
+
+	printOn { |stream|
+		stream << "%(%, %, %, %)".format(this.class.name, id, state, x, y);
+	}
 }
