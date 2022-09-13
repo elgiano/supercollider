@@ -76,6 +76,37 @@ extern bool compiledOK;
 
 std::vector<SC_UdpCustomInPort*> gCustomUdpPorts;
 
+#include "MsgFifo.h"
+void ProcessOSCPacket(OSC_Packet* inPacket, int inPortNum, double time);
+struct SCLangFifoMsg {
+    SCLangFifoMsg(): mPacket(0), mPortNum(0), mTimeReceived(0){}
+
+    void Set(OSC_Packet* packet, int portNum, double timeReceived) {
+		mPacket = packet; mPortNum = portNum; mTimeReceived = timeReceived;
+	};
+    void Perform() {
+		ProcessOSCPacket(mPacket, mPortNum, mTimeReceived);
+	};
+
+	OSC_Packet* mPacket;
+	int mPortNum;
+	double mTimeReceived;
+};
+
+#include <boost/sync/semaphore.hpp>
+#include <boost/sync/support/std_chrono.hpp>
+typedef MsgFifoNoFree<SCLangFifoMsg, 1024> SCLangMsgFifo;
+static SCLangMsgFifo* gOSCMsgFifo;
+static std::thread gPerformThread;
+static boost::sync::semaphore gPerformThreadSemaphore;
+
+void performThread() {
+    while (true) {
+        if (gPerformThreadSemaphore.wait_for(std::chrono::milliseconds(1)))
+            return;
+		gOSCMsgFifo->Perform();
+    }
+}
 
 ///////////
 
@@ -721,6 +752,13 @@ void FreeOSCPacket(OSC_Packet* inPacket) {
     }
 }
 
+void EnqueueOSCPacket(OSC_Packet* inPacket, int inPortNum, double time) {
+	SCLangFifoMsg msg;
+	msg.Set(inPacket, inPortNum, time);
+	if(!gOSCMsgFifo->Write(msg)) {
+		scprintf("lang fifo full\n");
+	}
+}
 // takes ownership of inPacket
 void ProcessOSCPacket(OSC_Packet* inPacket, int inPortNum, double time) {
     // post("recv '%s' %d\n", inPacket->mData, inPacket->mSize);
@@ -753,7 +791,9 @@ void init_OSC(int port) {
         error("sclang: init_OSC: WSAStartup() failed with error code %d.\n", nCode);
     }
 #endif
-
+	gOSCMsgFifo = new SCLangMsgFifo();
+	gOSCMsgFifo->MakeEmpty();
+    gPerformThread = std::thread(performThread);
     startAsioThread();
 
     try {
@@ -798,6 +838,9 @@ void cleanup_OSC() {
     postfl("cleaning up OSC\n");
 
     stopAsioThread();
+    gPerformThreadSemaphore.post();
+    gPerformThread.join();
+	delete gOSCMsgFifo;
 
 #ifdef _WIN32
     WSACleanup();

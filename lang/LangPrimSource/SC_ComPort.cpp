@@ -41,6 +41,7 @@
 #undef scprintf
 
 void ProcessOSCPacket(OSC_Packet* inPacket, int inPortNum, double time);
+void EnqueueOSCPacket(OSC_Packet* inPacket, int inPortNum, double time);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -101,6 +102,7 @@ void SC_UdpInPort::startReceiveUDP() {
 
 void SC_UdpInPort::handleReceivedUDP(const boost::system::error_code& error, std::size_t bytesTransferred) {
     double timeReceived = elapsedTime(); // get time now to minimize jitter due to lang load
+
     if (error == boost::asio::error::operation_aborted)
         return; /* we're done */
 
@@ -128,8 +130,8 @@ void SC_UdpInPort::handleReceivedUDP(const boost::system::error_code& error, std
     packet->mData = data;
     memcpy(data, recvBuffer.data(), bytesTransferred);
 
-    ProcessOSCPacket(packet, mPortNum, timeReceived);
-    startReceiveUDP();
+	EnqueueOSCPacket(packet, mPortNum, timeReceived);
+	startReceiveUDP();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
