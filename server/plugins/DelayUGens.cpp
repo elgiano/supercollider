@@ -1701,7 +1701,10 @@ void Pitch_Ctor(Pitch* unit) {
     unit->m_size = sc_max(unit->m_maxperiod << 1, unit->m_execPeriod);
 
     unit->m_buffer = (float*)RTAlloc(unit->mWorld, unit->m_size * sizeof(float));
-    ClearUnitIfMemFailed(unit->m_buffer);
+    if (!unit->m_buffer) {
+        ClearUnitOutputs(unit, 1);
+        ClearUnitOnMemFailed;
+    }
 
     unit->m_index = 0;
     unit->m_readp = 0;
