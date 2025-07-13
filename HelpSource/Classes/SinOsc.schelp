@@ -3,13 +3,9 @@ summary:: Interpolating sine wavetable oscillator.
 related:: Classes/Osc, Classes/FSinOsc, Classes/SinOscFB, Classes/PMOsc, Classes/Klang
 categories::  UGens>Generators>Deterministic
 
-
 Description::
-
-Generates a sine wave.
-Uses a wavetable lookup oscillator with linear interpolation.
-Frequency and phase modulation are provided for audio-rate modulation.
-Technically, code::SinOsc:: uses the same implementation as  link::Classes/Osc::  except that its table is fixed to be a sine wave made of code::8192:: samples.
+SinOsc is a sine wave oscillator that uses wavetable lookup with linear interpolation. It is efficient and supports both frequency and phase modulation at audio rate.
+Under the hood, SinOsc uses the same mechanism as Osc, but with a fixed sine wavetable of 8192 samples. This design allows for accurate, smooth sine wave generation with modulation capabilities.
 
 subsection:: Other sinewaves oscillators
 
@@ -46,17 +42,28 @@ Examples::
 
 code::
 
-// create an audio-rate sine wave at 200 Hz,
-// starting with phase 0 and an amplitude of 0.5
+// Basic sine wave at 200 Hz, amplitude 0.5
 { SinOsc.ar(200, 0, 0.5) }.play;
 
-// modulate the frequency with an exponential ramp
-{ SinOsc.ar(XLine.kr(2000, 200), 0, 0.5) }.play;
+// Frequency modulated with an exponential ramp
+{ SinOsc.ar(XLine.kr(2000, 200, 5), 0, 0.5) }.play;
 
-// more complex frequency modulation
-{ SinOsc.ar(SinOsc.ar(XLine.kr(1, 1000, 9), 0, 200, 800), 0, 0.25) }.play;
+// Nested frequency modulation
+{
+    SinOsc.ar(
+        SinOsc.ar(XLine.kr(1, 1000, 9), 0, 200, 800),
+        0,
+        0.25
+    )
+}.play;
 
-// phase modulation (see also PMOsc)
-{ SinOsc.ar(800, SinOsc.ar(XLine.kr(1, 1000, 9), 0, 2pi), 0.25) }.play;
+// Phase modulation example
+{
+    SinOsc.ar(
+        800,
+        SinOsc.ar(XLine.kr(1, 1000, 9), 0, 2pi),
+        0.25
+    )
+}.play;
 
 ::
