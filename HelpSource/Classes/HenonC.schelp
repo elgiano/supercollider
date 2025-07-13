@@ -42,15 +42,64 @@ Second value of x
 
 examples::
 code::
-// default initial params
-{ HenonC.ar(MouseX.kr(20, SampleRate.ir)) * 0.2 !2 }.scope(s);
+(
+{
+    // Frequency controlled by mouse X (from 20 Hz to the sample rate)
+    var freq = MouseX.kr(20, SampleRate.ir);
+
+    // Chaotic signal
+    var sig = HenonC.ar(freq);
+
+    // Stereo output with slight attenuation
+    (sig * 0.2).dup
+}.scope(s);
+)
 
 // mouse-control of params
-{ HenonC.ar(SampleRate.ir/4, MouseX.kr(1, 1.4), MouseY.kr(1, 0.3)) * 0.2 !2 }.scope(s);
+(
+{
+    var freq = SampleRate.ir / 4;
+
+    // 'a' and 'b' parameters modulated by mouse position
+    var a = MouseX.kr(1.0, 1.4);   // Horizontal control
+    var b = MouseY.kr(1.0, 0.3);   // Vertical control
+
+    var sig = HenonC.ar(freq, a, b);
+
+    (sig * 0.2).dup
+}.scope(s);
+)
 
 // randomly modulate params
-({ HenonC.ar(SampleRate.ir/8, LFNoise2.kr(1, 0.2, 1.2), LFNoise2.kr(1, 0.15, 0.15)) ! 2 * 0.02 }).scope(s);
+(
+{
+    var freq = SampleRate.ir / 8;
+
+    // LFNoise2 modulates 'a' and 'b' with smooth random motion
+    var a = LFNoise2.kr(1).range(1.0, 1.4);     // Smooth variation for 'a'
+    var b = LFNoise2.kr(1).range(0.15, 0.3);    // Smooth variation for 'b'
+
+    var sig = HenonC.ar(freq, a, b);
+
+    (sig * 0.02).dup
+}.scope(s);
+)
 
 // as a frequency control
-{ SinOsc.ar(HenonC.ar(40, MouseX.kr(1, 1.4), MouseY.kr(1, 0.3))*800+900) * 0.04 ! 2 }.scope(s);
+(
+{
+    // HenonC: a chaotic signal generator
+    var chaos = HenonC.ar(
+        freq: 40,
+        a: MouseX.kr(1.0, 1.4),  // X-axis controls 'a' parameter (horizontal movement)
+        b: MouseY.kr(1.0, 0.3)   // Y-axis controls 'b' parameter (vertical movement)
+    );
+
+    // Use HenonC output to modulate a sine wave frequency
+    var freq = chaos * 800 + 900;
+
+    // Generate stereo audio with a sine oscillator
+    SinOsc.ar(freq, 0, 0.04).dup  // 'dup' is shorthand for !2
+}.scope(s);
+)
 ::
